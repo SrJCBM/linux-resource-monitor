@@ -13,12 +13,144 @@ The application is designed for monitoring and registration only. It does not te
 | Stage | Scope | Status |
 |---|---|---|
 | Week 1 | Requirements, architecture and database design | Completed |
-| Week 2 | CPU, memory and `/proc` implementation | In progress |
-| Week 3 | Disk, network, users and processes | Pending |
+| Week 2 | CPU, memory and `/proc` implementation | Completed |
+| Week 3 | Disk, network, users and processes | In progress |
 | Week 4 | `os.fork()`, threads and CRUD | Pending |
 | Week 5 | Integration, tests and final deliverables | Pending |
 
-> The repository is currently in the Week 2 implementation phase. CPU and memory parsing from `/proc` have initial unit-tested implementations; the remaining modules will become operational as each week is completed.
+> The repository is currently in the Week 3 implementation phase. CPU, memory, disk, network, user-session and process parsers have initial unit-tested implementations; concurrency and CRUD are planned for Week 4.
+
+## Quick start for reviewers
+
+These steps are intended for someone cloning the repository for the first time on Ubuntu, WSL or another Linux distribution.
+
+```bash
+git clone <repository-url>
+cd linux-resource-monitor
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -r requirements.txt
+python3 -m unittest discover -s tests
+```
+
+At the current Week 3 stage, the tested implementation covers CPU, memory, disk, network, user-session and process parsing. The full interactive menu, concurrency demonstration and CRUD workflow are planned for later weeks.
+
+## Week 2 and Week 3 validation guide
+
+Use this section when another team member clones the repository in Ubuntu, WSL or a Linux virtual machine.
+
+### 1. Run all automated tests
+
+```bash
+python3 -m unittest discover -s tests
+```
+
+Expected result: all unit tests should pass. These tests use fixtures stored in `tests/fixtures/`, so they are deterministic and do not depend on the current machine state.
+
+### 2. Test Week 2: CPU and memory
+
+Run live CPU and memory readings:
+
+```bash
+python3 -c "from model.cpu_model import obtener_info_cpu; print(obtener_info_cpu())"
+python3 -c "from model.memoria_model import obtener_info_memoria; print(obtener_info_memoria())"
+```
+
+Expected CPU keys:
+
+- `procesadores_logicos`
+- `modelo`
+- `frecuencia_mhz`
+- `carga_promedio_1m`
+- `carga_promedio_5m`
+- `carga_promedio_15m`
+- `porcentaje_uso`
+
+Expected memory keys:
+
+- `mem_total_mb`
+- `mem_usada_mb`
+- `mem_libre_mb`
+- `mem_disponible_mb`
+- `swap_total_mb`
+- `swap_usada_mb`
+
+Useful Linux comparison commands:
+
+```bash
+lscpu
+cat /proc/loadavg
+cat /proc/stat | head -n 1
+cat /proc/meminfo | head
+free -m
+```
+
+Validation notes:
+
+- `porcentaje_uso` must be between `0.0` and `100.0`.
+- `procesadores_logicos` should match the logical CPU count reported by `lscpu`.
+- `mem_usada_mb` should follow `MemTotal - MemAvailable`, not `MemTotal - MemFree`.
+- `mem_libre_mb` and `mem_disponible_mb` are different values and should not be treated as synonyms.
+
+### 3. Test Week 3: disk, network, users and processes
+
+Run live readings for the Week 3 modules:
+
+```bash
+python3 -c "from model.disco_model import obtener_info_disco; print(obtener_info_disco())"
+python3 -c "from model.red_model import obtener_info_red; print(obtener_info_red())"
+python3 -c "from model.usuarios_model import obtener_usuarios; print(obtener_usuarios())"
+python3 -c "from model.procesos_model import obtener_procesos; print(obtener_procesos()[:5])"
+```
+
+Expected disk keys:
+
+- `sistema_archivos`
+- `punto_montaje`
+- `espacio_total_bytes`
+- `espacio_usado_bytes`
+- `espacio_libre_bytes`
+- `porcentaje_uso`
+
+Expected network keys:
+
+- `interfaz`
+- `direccion_ip`
+- `bytes_recibidos`
+- `bytes_enviados`
+- `paquetes_recibidos`
+- `paquetes_enviados`
+
+Expected user-session keys:
+
+- `nombre_usuario`
+- `terminal`
+- `inicio_sesion`
+
+Expected process keys:
+
+- `pid`
+- `usuario_propietario`
+- `estado`
+- `nombre_proceso`
+
+Useful Linux comparison commands:
+
+```bash
+df -P -B1
+cat /proc/net/dev
+ip addr show
+who
+ps -eo pid=,user=,stat=,comm= | head
+```
+
+Validation notes:
+
+- Disk records should be one row per mounted filesystem.
+- Network traffic counters should match `/proc/net/dev`; IP addresses should come from `ip addr show`.
+- The users command may return an empty list if no interactive sessions are registered by `who`.
+- The process list changes constantly; compare representative records, not the exact total process count.
+- None of these checks should require `sudo`.
 
 ## Main requirements
 
@@ -126,13 +258,13 @@ The initial version is expected to rely mainly on the Python standard library. `
 
 ## Execution
 
-When the initial executable version is available:
+When the initial executable menu is available:
 
 ```bash
 python3 main.py
 ```
 
-The application is Linux-specific because it uses `/proc` and `os.fork()`.
+The application is Linux-specific because it uses `/proc`, Linux commands and later `os.fork()`. During Weeks 2 and 3, use the test and manual module commands above; `main.py` will become the normal entry point once the terminal menu is integrated.
 
 ## Tests
 
@@ -143,6 +275,12 @@ python3 -m unittest discover -s tests
 ```
 
 Unit tests should use stored sample outputs. Linux integration tests should be kept separate because live system information changes continuously.
+
+Recommended checks before moving to Week 4:
+
+- Run all unit tests with `python3 -m unittest discover -s tests`.
+- Complete the Week 2 and Week 3 validation guide above in Ubuntu, WSL or a Linux virtual machine.
+- Confirm the project does not require administrator privileges.
 
 ## Database
 
