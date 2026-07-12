@@ -1,0 +1,28 @@
+flowchart TB
+    U[Usuario] --> MAIN[main.py]
+    MAIN --> V[Vista de consola y menus]
+
+    V --> MC[MonitorController]
+    V --> CRUD[CrudController]
+    V --> CC[ConcurrenciaController]
+
+    subgraph LIVE[Monitoreo en vivo]
+        MC --> MODELOS[Modelos: CPU, memoria, procesos, disco, red y usuarios]
+        MODELOS --> PROC[/proc]
+        MODELOS --> CMD[Comandos Linux: ps, who, df e ip]
+    end
+
+    subgraph DATA[Persistencia CRUD]
+        CRUD --> REPO[RepositorioCapturas]
+        REPO --> DB[(SQLite)]
+        DB --> TX[Captura completa en una transaccion]
+    end
+
+    subgraph CONC[Concurrencia]
+        CC --> HILOS[threading.Thread]
+        HILOS --> JOIN[Todos los hilos finalizan]
+        JOIN --> FORK[os.fork]
+        FORK --> IPC[Pipe + waitpid]
+    end
+
+    MODELOS -. datos consolidados .-> CRUD
