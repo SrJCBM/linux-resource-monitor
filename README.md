@@ -14,11 +14,11 @@ The application is designed for monitoring and registration only. It does not te
 |---|---|---|
 | Week 1 | Requirements, architecture and database design | Completed |
 | Week 2 | CPU, memory and `/proc` implementation | Completed |
-| Week 3 | Disk, network, users and processes | In progress |
-| Week 4 | `os.fork()`, threads and CRUD | Pending |
+| Week 3 | Disk, network, users and processes | Completed |
+| Week 4 | `os.fork()`, threads and CRUD | Completed |
 | Week 5 | Integration, tests and final deliverables | Pending |
 
-> The repository is currently in the Week 3 implementation phase. CPU, memory, disk, network, user-session and process parsers have initial unit-tested implementations; concurrency and CRUD are planned for Week 4.
+> The repository has completed the Week 4 implementation. The remaining Week 5 work covers final integration, manuals, evidence, corrections and presentation deliverables.
 
 ## Quick start for reviewers
 
@@ -33,7 +33,7 @@ python3 -m pip install -r requirements.txt
 python3 -m unittest discover -s tests
 ```
 
-At the current Week 3 stage, the tested implementation covers CPU, memory, disk, network, user-session and process parsing. The full interactive menu, concurrency demonstration and CRUD workflow are planned for later weeks.
+The tested implementation covers all six monitoring modules, concurrent collection, the Linux `fork()` demonstration and SQLite CRUD. The general application menu and final deliverables remain part of Week 5.
 
 ## Week 2 and Week 3 validation guide
 
@@ -152,6 +152,54 @@ Validation notes:
 - The process list changes constantly; compare representative records, not the exact total process count.
 - None of these checks should require `sudo`.
 
+## Week 4 validation guide
+
+Run these checks in Ubuntu, WSL or another Linux distribution.
+
+### 1. Validate threads
+
+```bash
+python3 -c "from controller.concurrencia_controller import recolectar_con_hilos; r=recolectar_con_hilos(); print(r['errores']); print(*r['evidencias'], sep='\n')"
+```
+
+Expected result: `errores` is empty and six evidence records show thread names beginning with `monitor-`, along with start and finish timestamps.
+
+### 2. Validate `os.fork()`
+
+```bash
+python3 -c "from controller.concurrencia_controller import demostrar_fork; print(demostrar_fork())"
+```
+
+Expected result: `parent_pid` and `child_pid` are different, `child_parent_pid` matches `parent_pid`, and `exit_status` is `0`.
+
+### 3. Test SQLite CRUD from the console
+
+```bash
+python3 main.py
+```
+
+Use the numbered menu to:
+
+1. Register a complete monitoring capture.
+2. List captures and optionally filter by `YYYY-MM-DD`.
+3. Consult a capture by identifier.
+4. Update only its label and comment.
+5. Delete it by typing `SI` when confirmation is requested.
+
+The default database is created at `database/data/monitor.sqlite3`. It is a runtime file and must not be committed.
+
+### 4. Run all Week 2-4 tests
+
+```bash
+python3 -m unittest discover -s tests
+```
+
+On Windows PowerShell with Ubuntu WSL, the equivalent command is:
+
+```powershell
+wsl.exe -d Ubuntu --cd "<repository-path-in-wsl>" -- python3 -m unittest discover -s tests
+```
+
 ## Main requirements
 
 The final application must display:
@@ -258,13 +306,11 @@ The initial version is expected to rely mainly on the Python standard library. `
 
 ## Execution
 
-When the initial executable menu is available:
-
 ```bash
 python3 main.py
 ```
 
-The application is Linux-specific because it uses `/proc`, Linux commands and later `os.fork()`. During Weeks 2 and 3, use the test and manual module commands above; `main.py` will become the normal entry point once the terminal menu is integrated.
+The Week 4 entry point opens the SQLite capture-history menu. The application is Linux-specific because live capture uses `/proc`, Linux commands and `os.fork()`. Week 5 will integrate this menu with the complete general monitoring menu.
 
 ## Tests
 
@@ -276,10 +322,10 @@ python3 -m unittest discover -s tests
 
 Unit tests should use stored sample outputs. Linux integration tests should be kept separate because live system information changes continuously.
 
-Recommended checks before moving to Week 4:
+Recommended checks before moving to Week 5:
 
 - Run all unit tests with `python3 -m unittest discover -s tests`.
-- Complete the Week 2 and Week 3 validation guide above in Ubuntu, WSL or a Linux virtual machine.
+- Complete the Week 2, Week 3 and Week 4 validation guides above in Ubuntu, WSL or a Linux virtual machine.
 - Confirm the project does not require administrator privileges.
 
 ## Database
@@ -289,7 +335,7 @@ SQLite is the persistence engine selected for the first version.
 The database stores:
 
 - Capture metadata.
-- CPU metrics.
+- CPU metrics, including the processor model reported by `/proc/cpuinfo`.
 - Memory metrics.
 - Disk metrics per mounted filesystem.
 - Process metrics.

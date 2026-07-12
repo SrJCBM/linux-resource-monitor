@@ -97,6 +97,10 @@ Los valores de disco que los modelos entregan en bytes se convertiran a GB en
 el limite del repositorio para respetar el esquema documentado, sin alterar el
 contrato de `disco_model.py`.
 
+El valor `modelo` entregado por `cpu_model.py` se almacenara en la columna
+`modelo_procesador` de `cpu_metricas`. El repositorio realizara este mapeo de
+nombres sin cambiar el contrato publico utilizado por la Vista.
+
 ### Controlador de monitoreo
 
 `controller/monitor_controller.py` conocera las funciones publicas de los seis

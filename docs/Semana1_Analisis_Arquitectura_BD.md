@@ -404,6 +404,7 @@ Relación 1:1 con `capturas`. Soporta RF-01.
 | Columna | Tipo | Restricciones | Descripción |
 |---|---|---|---|
 | `id_captura` | INTEGER | PRIMARY KEY, FOREIGN KEY → `capturas(id_captura)` | Referencia a la captura padre |
+| `modelo_procesador` | VARCHAR(255) | NULL | Modelo del procesador informado por `/proc/cpuinfo` |
 | `procesadores_logicos` | INTEGER | NOT NULL | Número de procesadores lógicos detectados; no equivale necesariamente a núcleos físicos |
 | `frecuencia_mhz` | FLOAT | NULL | Frecuencia del procesador en MHz |
 | `carga_promedio_1m` | FLOAT | NULL | Carga promedio del sistema en el último minuto, leída desde `/proc/loadavg` |
@@ -495,6 +496,7 @@ CREATE TABLE capturas (
 
 CREATE TABLE cpu_metricas (
     id_captura           INTEGER PRIMARY KEY,
+    modelo_procesador    VARCHAR(255),
     procesadores_logicos INTEGER NOT NULL,
     frecuencia_mhz       FLOAT,
     carga_promedio_1m    FLOAT,

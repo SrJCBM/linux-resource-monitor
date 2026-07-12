@@ -1,0 +1,1 @@
+"""Infraestructura SQLite del monitor."""
