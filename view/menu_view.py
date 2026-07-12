@@ -5,9 +5,108 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
+from view.consola_view import (
+    format_cpu_info,
+    format_disco_info,
+    format_estado_general,
+    format_memoria_info,
+    format_procesos_info,
+    format_red_info,
+    format_usuarios_info,
+)
+
 
 InputFn = Callable[[str], str]
 OutputFn = Callable[[str], None]
+
+
+def ejecutar_menu_principal(
+    monitor: Any,
+    crud: Any,
+    input_fn: InputFn = input,
+    output_fn: OutputFn = print,
+) -> None:
+    """Ejecuta el menu integrado de los modulos de monitoreo y CRUD."""
+    formateadores = {
+        "2": ("cpu", format_cpu_info),
+        "3": ("memoria", format_memoria_info),
+        "4": ("procesos", format_procesos_info),
+        "5": ("discos", format_disco_info),
+        "6": ("red", format_red_info),
+        "7": ("usuarios", format_usuarios_info),
+    }
+
+    while True:
+        output_fn("\n=== MENU PRINCIPAL ===")
+        output_fn("[1] Estado general")
+        output_fn("[2] CPU")
+        output_fn("[3] Memoria y swap")
+        output_fn("[4] Procesos")
+        output_fn("[5] Disco")
+        output_fn("[6] Red")
+        output_fn("[7] Usuarios conectados")
+        output_fn("[8] Historial y CRUD")
+        output_fn("[9] Demostracion de hilos y fork")
+        output_fn("[0] Salir")
+        opcion = input_fn("Seleccione una opcion: ").strip()
+
+        if opcion == "0":
+            output_fn("Hasta luego.")
+            return
+        if opcion == "1":
+            try:
+                resultado = monitor.obtener_estado_general()
+                output_fn(
+                    format_estado_general(
+                        resultado.get("datos", {}), resultado.get("errores", {})
+                    )
+                )
+            except (OSError, RuntimeError, ValueError) as exc:
+                output_fn(f"ERROR: No se pudo obtener el estado general: {exc}")
+            _esperar_retorno(input_fn)
+            continue
+        if opcion in formateadores:
+            nombre, formateador = formateadores[opcion]
+            try:
+                output_fn(formateador(monitor.obtener_modulo(nombre)))
+            except (OSError, RuntimeError, ValueError) as exc:
+                output_fn(f"ERROR: No se pudo obtener {nombre}: {exc}")
+            _esperar_retorno(input_fn)
+            continue
+        if opcion == "8":
+            ejecutar_menu_crud(crud, input_fn, output_fn)
+            continue
+        if opcion == "9":
+            try:
+                output_fn(_format_demostracion_concurrencia(monitor.demostrar_concurrencia()))
+            except (OSError, RuntimeError, ValueError) as exc:
+                output_fn(f"ERROR: No se pudo ejecutar la demostracion: {exc}")
+            _esperar_retorno(input_fn)
+            continue
+        output_fn("ERROR: Opcion invalida.")
+
+
+def _esperar_retorno(input_fn: InputFn) -> None:
+    input_fn("Presione Enter para volver al menu principal: ")
+
+
+def _format_demostracion_concurrencia(resultado: dict[str, object]) -> str:
+    recoleccion = resultado.get("recoleccion", {})
+    fork = resultado.get("fork", {})
+    if not isinstance(recoleccion, dict) or not isinstance(fork, dict):
+        return "ERROR: La demostracion devolvio un resultado invalido."
+
+    evidencias = recoleccion.get("evidencias", [])
+    errores = recoleccion.get("errores", {})
+    lineas = [
+        "=== DEMOSTRACION DE CONCURRENCIA ===",
+        f"Hilos completados: {len(evidencias) if isinstance(evidencias, list) else 0}",
+        f"Errores de hilos: {len(errores) if isinstance(errores, dict) else 0}",
+        f"PID padre: {fork.get('parent_pid', 'No disponible')}",
+        f"PID hijo: {fork.get('child_pid', 'No disponible')}",
+        f"Estado de salida: {fork.get('exit_status', 'No disponible')}",
+    ]
+    return "\n".join(lineas)
 
 
 def ejecutar_menu_crud(

@@ -7,7 +7,8 @@ import unittest
 from pathlib import Path
 
 from controller.crud_controller import CrudController
-from main import crear_controlador
+from controller.monitor_controller import MonitorController
+from main import crear_aplicacion, crear_controlador
 
 
 class MainTest(unittest.TestCase):
@@ -18,6 +19,16 @@ class MainTest(unittest.TestCase):
             controlador = crear_controlador(ruta)
 
             self.assertIsInstance(controlador, CrudController)
+            self.assertTrue(ruta.exists())
+
+    def test_crear_aplicacion_compone_los_dos_controladores(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            ruta = Path(temp_dir) / "monitor.sqlite3"
+
+            monitor, crud = crear_aplicacion(ruta)
+
+            self.assertIsInstance(monitor, MonitorController)
+            self.assertIsInstance(crud, CrudController)
             self.assertTrue(ruta.exists())
 
 
