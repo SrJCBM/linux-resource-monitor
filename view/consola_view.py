@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone, tzinfo
 
 
 GIGABYTE_BYTES = 1024**3
@@ -42,7 +42,11 @@ def _format_gigabytes(value: object) -> str:
     return _format_number(float(value or 0) / GIGABYTE_BYTES, "GB")
 
 
-def _format_session_duration(inicio_sesion: object, ahora: datetime) -> str:
+def _format_session_duration(
+    inicio_sesion: object,
+    ahora: datetime,
+    zona_local: tzinfo | None = None,
+) -> str:
     """Calcula la duracion de una sesion desde una fecha ISO almacenada."""
     try:
         inicio = datetime.fromisoformat(str(inicio_sesion).replace("Z", "+00:00"))
@@ -50,10 +54,17 @@ def _format_session_duration(inicio_sesion: object, ahora: datetime) -> str:
         return "No disponible"
 
     referencia = ahora
-    if inicio.tzinfo is not None and referencia.tzinfo is None:
-        referencia = referencia.replace(tzinfo=inicio.tzinfo)
-    elif inicio.tzinfo is None and referencia.tzinfo is not None:
-        referencia = referencia.replace(tzinfo=None)
+    inicio_tiene_zona = inicio.tzinfo is not None and inicio.utcoffset() is not None
+    referencia_tiene_zona = referencia.tzinfo is not None and referencia.utcoffset() is not None
+    if inicio_tiene_zona and not referencia_tiene_zona:
+        zona_referencia = zona_local or datetime.now().astimezone().tzinfo or timezone.utc
+        referencia = referencia.replace(tzinfo=zona_referencia)
+    elif not inicio_tiene_zona and referencia_tiene_zona:
+        inicio = inicio.replace(tzinfo=referencia.tzinfo)
+
+    if inicio_tiene_zona or referencia_tiene_zona:
+        inicio = inicio.astimezone(timezone.utc)
+        referencia = referencia.astimezone(timezone.utc)
 
     minutos = max(0, int((referencia - inicio).total_seconds() // 60))
     horas, minutos = divmod(minutos, 60)
@@ -104,13 +115,14 @@ def format_memoria_info(data: dict[str, object]) -> str:
     )
 
 
-def format_disco_info(data: list[dict[str, object]]) -> str:
+def format_disco_info(data: list[dict[str, object]], limite: int = 20) -> str:
     """Devuelve una tabla legible de los sistemas de archivos montados."""
     if not data:
         return "=== DISCO ===\nNo hay sistemas de archivos montados."
 
+    discos = data[: max(0, limite)]
     rows = []
-    for item in data:
+    for item in discos:
         porcentaje_uso = float(item.get("porcentaje_uso", 0.0))
         rows.append(
             [
@@ -127,6 +139,7 @@ def format_disco_info(data: list[dict[str, object]]) -> str:
     return "\n".join(
         [
             "=== DISCO ===",
+            f"Mostrando {len(discos)} de {len(data)} sistemas de archivos",
             _format_table(
                 ["Sistema de archivos", "Montaje", "Total", "Usado", "Libre", "Uso", "Estado"],
                 rows,
@@ -215,7 +228,9 @@ def format_usuarios_info(data: list[dict[str, object]], ahora: datetime | None =
 
 
 def format_estado_general(
-    data: dict[str, object], errores: dict[str, str] | None = None
+    data: dict[str, object],
+    errores: dict[str, str] | None = None,
+    fecha_hora: datetime | None = None,
 ) -> str:
     """Devuelve una vista consolidada de los seis modulos de monitoreo."""
     cpu = data.get("cpu") if isinstance(data.get("cpu"), dict) else {}
@@ -225,8 +240,10 @@ def format_estado_general(
     procesos = data.get("procesos") if isinstance(data.get("procesos"), list) else []
     usuarios = data.get("usuarios") if isinstance(data.get("usuarios"), list) else []
 
+    actualizacion = fecha_hora or datetime.now()
     sections = [
         "=== ESTADO GENERAL ===",
+        f"Actualizado: {actualizacion.strftime('%d/%m/%Y %H:%M:%S')}",
         format_cpu_info(cpu),
         format_memoria_info(memoria),
         format_disco_info(discos),

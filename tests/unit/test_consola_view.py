@@ -1,5 +1,5 @@
 import unittest
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from view import consola_view
 
@@ -60,6 +60,33 @@ class ConsolaViewTest(unittest.TestCase):
         self.assertIn("1.00 GB", result)
         self.assertIn("50.00 %", result)
         self.assertIn("NORMAL", result)
+
+    def test_format_disco_info_limits_records_and_reports_total(self):
+        result = consola_view.format_disco_info(
+            [
+                {
+                    "sistema_archivos": "/dev/sda1",
+                    "punto_montaje": "/",
+                    "espacio_total_bytes": 1073741824,
+                    "espacio_usado_bytes": 536870912,
+                    "espacio_libre_bytes": 536870912,
+                    "porcentaje_uso": 50.0,
+                },
+                {
+                    "sistema_archivos": "/dev/sdb1",
+                    "punto_montaje": "/datos",
+                    "espacio_total_bytes": 2147483648,
+                    "espacio_usado_bytes": 1073741824,
+                    "espacio_libre_bytes": 1073741824,
+                    "porcentaje_uso": 50.0,
+                },
+            ],
+            limite=1,
+        )
+
+        self.assertIn("/dev/sda1", result)
+        self.assertNotIn("/dev/sdb1", result)
+        self.assertIn("Mostrando 1 de 2 sistemas de archivos", result)
 
     def test_format_red_info_includes_network_packets(self):
         result = consola_view.format_red_info(
@@ -123,6 +150,15 @@ class ConsolaViewTest(unittest.TestCase):
 
         self.assertIn("2 h 15 min", result)
 
+    def test_format_session_duration_normalizes_z_time_with_local_timezone(self):
+        result = consola_view._format_session_duration(
+            "2026-07-11T08:30:00Z",
+            datetime(2026, 7, 11, 5, 45),
+            zona_local=timezone(timedelta(hours=-5)),
+        )
+
+        self.assertEqual("2 h 15 min", result)
+
     def test_format_estado_general_includes_all_modules_and_warnings(self):
         result = consola_view.format_estado_general(
             {
@@ -134,6 +170,7 @@ class ConsolaViewTest(unittest.TestCase):
                 "usuarios": [],
             },
             errores={"red": "sin direccion IP"},
+            fecha_hora=datetime(2026, 7, 11, 10, 45, 30),
         )
 
         self.assertIn("ESTADO GENERAL", result)
@@ -144,6 +181,7 @@ class ConsolaViewTest(unittest.TestCase):
         self.assertIn("=== PROCESOS ===", result)
         self.assertIn("=== USUARIOS ===", result)
         self.assertIn("ADVERTENCIA: red: sin direccion IP", result)
+        self.assertIn("Actualizado: 11/07/2026 10:45:30", result)
 
 
 if __name__ == "__main__":
