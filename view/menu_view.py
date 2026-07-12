@@ -5,9 +5,108 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
+from view.consola_view import (
+    format_cpu_info,
+    format_disco_info,
+    format_estado_general,
+    format_memoria_info,
+    format_procesos_info,
+    format_red_info,
+    format_usuarios_info,
+)
+
 
 InputFn = Callable[[str], str]
 OutputFn = Callable[[str], None]
+
+
+def ejecutar_menu_principal(
+    monitor: Any,
+    crud: Any,
+    input_fn: InputFn = input,
+    output_fn: OutputFn = print,
+) -> None:
+    """Ejecuta el menu integrado de los modulos de monitoreo y CRUD."""
+    formateadores = {
+        "2": ("cpu", format_cpu_info),
+        "3": ("memoria", format_memoria_info),
+        "4": ("procesos", format_procesos_info),
+        "5": ("discos", format_disco_info),
+        "6": ("red", format_red_info),
+        "7": ("usuarios", format_usuarios_info),
+    }
+
+    while True:
+        output_fn("\n=== MENU PRINCIPAL ===")
+        output_fn("[1] Estado general")
+        output_fn("[2] CPU")
+        output_fn("[3] Memoria y swap")
+        output_fn("[4] Procesos")
+        output_fn("[5] Disco")
+        output_fn("[6] Red")
+        output_fn("[7] Usuarios conectados")
+        output_fn("[8] Historial y CRUD")
+        output_fn("[9] Demostracion de hilos y fork")
+        output_fn("[0] Salir")
+        opcion = input_fn("Seleccione una opcion: ").strip()
+
+        if opcion == "0":
+            output_fn("Hasta luego.")
+            return
+        if opcion == "1":
+            try:
+                resultado = monitor.obtener_estado_general()
+                output_fn(
+                    format_estado_general(
+                        resultado.get("datos", {}), resultado.get("errores", {})
+                    )
+                )
+            except (OSError, RuntimeError, ValueError) as exc:
+                output_fn(f"ERROR: No se pudo obtener el estado general: {exc}")
+            _esperar_retorno(input_fn)
+            continue
+        if opcion in formateadores:
+            nombre, formateador = formateadores[opcion]
+            try:
+                output_fn(formateador(monitor.obtener_modulo(nombre)))
+            except (OSError, RuntimeError, ValueError) as exc:
+                output_fn(f"ERROR: No se pudo obtener {nombre}: {exc}")
+            _esperar_retorno(input_fn)
+            continue
+        if opcion == "8":
+            ejecutar_menu_crud(crud, input_fn, output_fn)
+            continue
+        if opcion == "9":
+            try:
+                output_fn(_format_demostracion_concurrencia(monitor.demostrar_concurrencia()))
+            except (OSError, RuntimeError, ValueError) as exc:
+                output_fn(f"ERROR: No se pudo ejecutar la demostracion: {exc}")
+            _esperar_retorno(input_fn)
+            continue
+        output_fn("ERROR: Opcion invalida.")
+
+
+def _esperar_retorno(input_fn: InputFn) -> None:
+    input_fn("Presione Enter para volver al menu principal: ")
+
+
+def _format_demostracion_concurrencia(resultado: dict[str, object]) -> str:
+    recoleccion = resultado.get("recoleccion", {})
+    fork = resultado.get("fork", {})
+    if not isinstance(recoleccion, dict) or not isinstance(fork, dict):
+        return "ERROR: La demostracion devolvio un resultado invalido."
+
+    evidencias = recoleccion.get("evidencias", [])
+    errores = recoleccion.get("errores", {})
+    lineas = [
+        "=== DEMOSTRACION DE CONCURRENCIA ===",
+        f"Hilos completados: {len(evidencias) if isinstance(evidencias, list) else 0}",
+        f"Errores de hilos: {len(errores) if isinstance(errores, dict) else 0}",
+        f"PID padre: {fork.get('parent_pid', 'No disponible')}",
+        f"PID hijo: {fork.get('child_pid', 'No disponible')}",
+        f"Estado de salida: {fork.get('exit_status', 'No disponible')}",
+    ]
+    return "\n".join(lineas)
 
 
 def ejecutar_menu_crud(
@@ -31,38 +130,54 @@ def ejecutar_menu_crud(
         if opcion == "1":
             etiqueta = input_fn("Etiqueta opcional: ").strip() or None
             comentario = input_fn("Comentario opcional: ").strip() or None
-            id_captura = controller.crear_captura(etiqueta, comentario)
-            output_fn(f"EXITO: captura {id_captura} registrada.")
+            try:
+                id_captura = controller.crear_captura(etiqueta, comentario)
+                output_fn(f"EXITO: captura {id_captura} registrada.")
+            except (RuntimeError, ValueError) as exc:
+                output_fn(f"ERROR: No se pudo registrar la captura: {exc}")
         elif opcion == "2":
             fecha = input_fn("Fecha YYYY-MM-DD opcional: ").strip() or None
-            _mostrar_listado(controller.listar_capturas(fecha), output_fn)
+            try:
+                _mostrar_listado(controller.listar_capturas(fecha), output_fn)
+            except (RuntimeError, ValueError) as exc:
+                output_fn(f"ERROR: No se pudo listar las capturas: {exc}")
         elif opcion == "3":
             id_captura = _leer_id(input_fn, output_fn)
             if id_captura is not None:
-                captura = controller.consultar_captura(id_captura)
-                if captura is None:
-                    output_fn("ADVERTENCIA: captura no encontrada.")
-                else:
-                    _mostrar_detalle(captura, output_fn)
+                try:
+                    captura = controller.consultar_captura(id_captura)
+                    if captura is None:
+                        output_fn("ADVERTENCIA: captura no encontrada.")
+                    else:
+                        _mostrar_detalle(captura, output_fn)
+                except (RuntimeError, ValueError) as exc:
+                    output_fn(f"ERROR: No se pudo consultar la captura: {exc}")
         elif opcion == "4":
             id_captura = _leer_id(input_fn, output_fn)
             if id_captura is not None:
                 etiqueta = input_fn("Nueva etiqueta opcional: ").strip() or None
                 comentario = input_fn("Nuevo comentario opcional: ").strip() or None
-                if controller.actualizar_captura(id_captura, etiqueta, comentario):
-                    output_fn("EXITO: metadatos actualizados.")
-                else:
-                    output_fn("ADVERTENCIA: captura no encontrada.")
+                try:
+                    if controller.actualizar_captura(id_captura, etiqueta, comentario):
+                        output_fn("EXITO: metadatos actualizados.")
+                    else:
+                        output_fn("ADVERTENCIA: captura no encontrada.")
+                except (RuntimeError, ValueError) as exc:
+                    output_fn(f"ERROR: No se pudo actualizar la captura: {exc}")
         elif opcion == "5":
             id_captura = _leer_id(input_fn, output_fn)
             if id_captura is not None:
                 confirmacion = input_fn("Escriba SI para confirmar la eliminacion: ").strip()
                 if confirmacion != "SI":
                     output_fn("Eliminacion cancelada.")
-                elif controller.eliminar_captura(id_captura):
-                    output_fn("EXITO: captura eliminada.")
                 else:
-                    output_fn("ADVERTENCIA: captura no encontrada.")
+                    try:
+                        if controller.eliminar_captura(id_captura):
+                            output_fn("EXITO: captura eliminada.")
+                        else:
+                            output_fn("ADVERTENCIA: captura no encontrada.")
+                    except (RuntimeError, ValueError) as exc:
+                        output_fn(f"ERROR: No se pudo eliminar la captura: {exc}")
         else:
             output_fn("ERROR: Opcion invalida.")
 
@@ -97,9 +212,20 @@ def _mostrar_detalle(captura: dict[str, object], output_fn: OutputFn) -> None:
     output_fn(f"Fecha: {captura['fecha_hora']}")
     output_fn(f"Etiqueta: {captura.get('etiqueta') or '-'}")
     output_fn(f"Comentario: {captura.get('comentario') or '-'}")
+    formateadores = {
+        "cpu": format_cpu_info,
+        "memoria": format_memoria_info,
+        "discos": format_disco_info,
+        "red": format_red_info,
+        "procesos": format_procesos_info,
+        "usuarios": format_usuarios_info,
+    }
     for modulo in ("cpu", "memoria", "discos", "red", "procesos", "usuarios"):
         valor = captura.get(modulo)
-        if isinstance(valor, list):
-            output_fn(f"{modulo.capitalize()}: {len(valor)} registros")
+        formateador = formateadores[modulo]
+        if modulo in {"cpu", "memoria"} and isinstance(valor, dict):
+            output_fn(formateador(valor))
+        elif isinstance(valor, list):
+            output_fn(formateador(valor))
         else:
-            output_fn(f"{modulo.capitalize()}: {valor}")
+            output_fn(f"{modulo.capitalize()}: No disponible")

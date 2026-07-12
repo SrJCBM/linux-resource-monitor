@@ -1,0 +1,15 @@
+Evidence: suite_completa
+Requirements: RNF-01, RNF-06, RNF-09
+Executed at (UTC): 2026-07-12T19:14:04.233178+00:00
+Command: /usr/bin/python3 -m unittest discover -s tests
+Return code: 0
+
+--- STDOUT ---
+
+
+--- STDERR ---
+........................................................
+----------------------------------------------------------------------
+Ran 56 tests in 0.456s
+
+OK

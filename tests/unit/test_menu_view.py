@@ -28,6 +28,32 @@ class ControladorFalso:
         return True
 
 
+class ControladorConError(ControladorFalso):
+    def crear_captura(self, etiqueta, comentario, usuario_registro=None):
+        raise RuntimeError("captura incompleta")
+
+
+class ControladorConErrorAlListar(ControladorFalso):
+    def listar_capturas(self, fecha=None):
+        raise RuntimeError("base no disponible")
+
+
+class ControladorConDetalle(ControladorFalso):
+    def consultar_captura(self, id_captura):
+        return {
+            "id_captura": id_captura,
+            "fecha_hora": "2026-07-12 10:00:00",
+            "etiqueta": "prueba",
+            "comentario": "detalle",
+            "cpu": {"modelo": "CPU prueba", "porcentaje_uso": 12.5},
+            "memoria": {"mem_total_mb": 100.0, "mem_usada_mb": 25.0},
+            "discos": [],
+            "red": [],
+            "procesos": [],
+            "usuarios": [],
+        }
+
+
 class MenuViewTest(unittest.TestCase):
     def test_opcion_invalida_informa_y_permite_volver(self) -> None:
         entradas = iter(["99", "0"])
@@ -44,6 +70,39 @@ class MenuViewTest(unittest.TestCase):
         ejecutar_menu_crud(controlador, lambda _: next(entradas), lambda _: None)
 
         self.assertEqual(controlador.eliminados, [7])
+
+    def test_error_al_crear_informa_y_permite_continuar(self) -> None:
+        entradas = iter(["1", "", "", "0"])
+        salidas: list[str] = []
+
+        ejecutar_menu_crud(ControladorConError(), lambda _: next(entradas), salidas.append)
+
+        self.assertTrue(any("captura incompleta" in salida for salida in salidas))
+        self.assertTrue(any("HISTORIAL DE CAPTURAS" in salida for salida in salidas))
+
+    def test_error_al_listar_informa_y_permite_continuar(self) -> None:
+        entradas = iter(["2", "", "0"])
+        salidas: list[str] = []
+
+        ejecutar_menu_crud(
+            ControladorConErrorAlListar(), lambda _: next(entradas), salidas.append
+        )
+
+        self.assertTrue(any("base no disponible" in salida for salida in salidas))
+        self.assertGreaterEqual(
+            sum("HISTORIAL DE CAPTURAS" in salida for salida in salidas), 2
+        )
+
+    def test_detalle_formatea_cpu_y_memoria_sin_diccionarios_crudos(self) -> None:
+        entradas = iter(["3", "7", "0"])
+        salidas: list[str] = []
+
+        ejecutar_menu_crud(ControladorConDetalle(), lambda _: next(entradas), salidas.append)
+
+        detalle = "\n".join(salidas)
+        self.assertIn("=== CPU ===", detalle)
+        self.assertIn("=== MEMORIA ===", detalle)
+        self.assertNotIn("'porcentaje_uso'", detalle)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,10 @@
+Evidence: crud_sqlite
+Requirements: RF-09 a RF-12, RNF-03, RNF-13, RNF-14
+Executed at (UTC): 2026-07-12T19:14:04.756895+00:00
+Command: /usr/bin/python3 -c import tempfile; from pathlib import Path; from controller.crud_controller import CrudController; from controller.monitor_controller import MonitorController; from model.repositorio import RepositorioCapturas; t=tempfile.TemporaryDirectory(); r=RepositorioCapturas(Path(t.name)/'monitor.sqlite3'); c=CrudController(r, recolector=MonitorController().obtener_estado_general); i=c.crear_captura('evidencia','CRUD real'); print({'id': i, 'listadas': len(c.listar_capturas()), 'actualizada': c.actualizar_captura(i,'actualizada','ok'), 'eliminada': c.eliminar_captura(i), 'restantes': len(c.listar_capturas())})
+Return code: 0
+
+--- STDOUT ---
+{'id': 1, 'listadas': 1, 'actualizada': True, 'eliminada': True, 'restantes': 0}
+
+--- STDERR ---
