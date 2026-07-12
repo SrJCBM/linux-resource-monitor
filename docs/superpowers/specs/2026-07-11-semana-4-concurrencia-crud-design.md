@@ -18,11 +18,54 @@ La entrega incluye:
 - Persistencia atomica de capturas completas en SQLite.
 - Creacion, consulta, actualizacion de metadatos y eliminacion de capturas.
 - Controladores y menus de consola necesarios para operar el CRUD.
-- Pruebas unitarias e integracion Linux para los mecanismos anteriores.
+- Pruebas unitarias y evidencia Linux para los mecanismos anteriores.
 - Instrucciones de validacion en Ubuntu y WSL.
 
 No se incluyen funcionalidades de la Semana 5, interfaces graficas, servicios
 web, motores de persistencia adicionales ni dependencias externas.
+
+## Relacion con el orden de actividades definido
+
+El trabajo conserva la secuencia incremental de
+`docs/ESTRUCTURA_PROYECTO.md`. Semana 4 no vuelve a implementar los recolectores
+de recursos: utiliza como entradas los contratos terminados en las semanas 2 y
+3 y agrega coordinacion y persistencia sobre ellos.
+
+| Etapa definida | Resultado utilizado o producido | Relacion con Semana 4 |
+|---|---|---|
+| Semana 1: requisitos, arquitectura y base de datos | RF-07 a RF-12, MVC y modelo relacional | Define los contratos que deben respetar concurrencia y CRUD. |
+| Semana 2: CPU, memoria y `/proc` | `cpu_model.py` y `memoria_model.py` | Se incorporan como tareas de la captura concurrente sin modificar sus formulas. |
+| Semana 3: disco, red, procesos y usuarios | Cuatro modelos y sus listas de metricas | Completan los seis modulos necesarios para una captura integral. |
+| Semana 4: concurrencia | `concurrencia_controller.py` y evidencia de hilos y `fork()` | Consolida los modelos existentes antes de cualquier escritura. |
+| Semana 4: persistencia | `conexion.py`, `esquema.sql` y `repositorio.py` | Guarda la estructura consolidada mediante una transaccion SQLite. |
+| Semana 4: CRUD e interfaz | `crud_controller.py` y menus numerados | Expone RF-09 a RF-12 al usuario sin romper la separacion MVC. |
+| Semana 5: integracion y entrega | Pruebas integrales, manuales, evidencias y correcciones | Recibe la Semana 4 funcional para validacion final; no se adelantan articulo, presentacion ni video. |
+
+Aunque `database/esquema.sql` aparece en la creacion prevista para Semana 1,
+actualmente no existe en el repositorio. Se incorpora al primer bloque de Semana
+4 como recuperacion de un entregable de diseno pendiente, antes de implementar
+el repositorio. Esto no cambia el alcance funcional ni agrega una actividad
+nueva.
+
+### Secuencia interna de Semana 4
+
+Para mantener las dependencias en orden, las actividades se ejecutaran asi:
+
+1. Materializar el esquema de Semana 1 en `database/esquema.sql` y crear
+   `database/conexion.py`.
+2. Implementar y probar `model/repositorio.py` sobre una base temporal.
+3. Crear `controller/monitor_controller.py` para definir la consolidacion de los
+   seis modelos ya implementados.
+4. Implementar `controller/concurrencia_controller.py`, primero con hilos y
+   despues con la demostracion aislada de `os.fork()`.
+5. Implementar `controller/crud_controller.py` y los menus de consola para
+   operar RF-09 a RF-12.
+6. Ejecutar las pruebas unitarias y obtener evidencia funcional en WSL.
+7. Actualizar el README con el procedimiento de validacion de Semana 4.
+
+Cada paso depende solamente de resultados producidos por los pasos anteriores:
+el CRUD no se conecta directamente a los recolectores, SQLite no se usa desde
+los hilos y el proceso hijo se ejecuta fuera de la fase concurrente.
 
 ## Arquitectura
 
@@ -151,9 +194,14 @@ Las pruebas del repositorio utilizaran una base SQLite temporal y verificaran:
 
 Las pruebas de concurrencia verificaran que se creen al menos dos hilos, que se
 inicien antes de unirse, que los resultados se consoliden y que los errores
-parciales se identifiquen. Las pruebas de `fork()` seran de integracion y se
-omitiran explicitamente fuera de Linux. La suite completa se ejecutara tambien
-en la distribucion Ubuntu disponible mediante WSL.
+parciales se identifiquen. La demostracion de `fork()` se validara directamente
+en Linux y se omitira de forma controlada fuera de ese sistema. La suite de
+Semana 4 se ejecutara tambien en la distribucion Ubuntu disponible mediante WSL.
+
+Las pruebas de integracion completas entre menu, controladores, modelos y base
+de datos permanecen en Semana 5, tal como establece el orden original. Semana 4
+dejara unidades probadas y evidencia ejecutable suficiente para que esa
+integracion final no dependa de componentes simulados o pendientes.
 
 ## Criterios de finalizacion
 
