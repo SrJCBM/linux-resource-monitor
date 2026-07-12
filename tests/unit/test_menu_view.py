@@ -33,6 +33,11 @@ class ControladorConError(ControladorFalso):
         raise RuntimeError("captura incompleta")
 
 
+class ControladorConErrorAlListar(ControladorFalso):
+    def listar_capturas(self, fecha=None):
+        raise RuntimeError("base no disponible")
+
+
 class ControladorConDetalle(ControladorFalso):
     def consultar_captura(self, id_captura):
         return {
@@ -74,6 +79,19 @@ class MenuViewTest(unittest.TestCase):
 
         self.assertTrue(any("captura incompleta" in salida for salida in salidas))
         self.assertTrue(any("HISTORIAL DE CAPTURAS" in salida for salida in salidas))
+
+    def test_error_al_listar_informa_y_permite_continuar(self) -> None:
+        entradas = iter(["2", "", "0"])
+        salidas: list[str] = []
+
+        ejecutar_menu_crud(
+            ControladorConErrorAlListar(), lambda _: next(entradas), salidas.append
+        )
+
+        self.assertTrue(any("base no disponible" in salida for salida in salidas))
+        self.assertGreaterEqual(
+            sum("HISTORIAL DE CAPTURAS" in salida for salida in salidas), 2
+        )
 
     def test_detalle_formatea_cpu_y_memoria_sin_diccionarios_crudos(self) -> None:
         entradas = iter(["3", "7", "0"])

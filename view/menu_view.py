@@ -137,34 +137,47 @@ def ejecutar_menu_crud(
                 output_fn(f"ERROR: No se pudo registrar la captura: {exc}")
         elif opcion == "2":
             fecha = input_fn("Fecha YYYY-MM-DD opcional: ").strip() or None
-            _mostrar_listado(controller.listar_capturas(fecha), output_fn)
+            try:
+                _mostrar_listado(controller.listar_capturas(fecha), output_fn)
+            except (RuntimeError, ValueError) as exc:
+                output_fn(f"ERROR: No se pudo listar las capturas: {exc}")
         elif opcion == "3":
             id_captura = _leer_id(input_fn, output_fn)
             if id_captura is not None:
-                captura = controller.consultar_captura(id_captura)
-                if captura is None:
-                    output_fn("ADVERTENCIA: captura no encontrada.")
-                else:
-                    _mostrar_detalle(captura, output_fn)
+                try:
+                    captura = controller.consultar_captura(id_captura)
+                    if captura is None:
+                        output_fn("ADVERTENCIA: captura no encontrada.")
+                    else:
+                        _mostrar_detalle(captura, output_fn)
+                except (RuntimeError, ValueError) as exc:
+                    output_fn(f"ERROR: No se pudo consultar la captura: {exc}")
         elif opcion == "4":
             id_captura = _leer_id(input_fn, output_fn)
             if id_captura is not None:
                 etiqueta = input_fn("Nueva etiqueta opcional: ").strip() or None
                 comentario = input_fn("Nuevo comentario opcional: ").strip() or None
-                if controller.actualizar_captura(id_captura, etiqueta, comentario):
-                    output_fn("EXITO: metadatos actualizados.")
-                else:
-                    output_fn("ADVERTENCIA: captura no encontrada.")
+                try:
+                    if controller.actualizar_captura(id_captura, etiqueta, comentario):
+                        output_fn("EXITO: metadatos actualizados.")
+                    else:
+                        output_fn("ADVERTENCIA: captura no encontrada.")
+                except (RuntimeError, ValueError) as exc:
+                    output_fn(f"ERROR: No se pudo actualizar la captura: {exc}")
         elif opcion == "5":
             id_captura = _leer_id(input_fn, output_fn)
             if id_captura is not None:
                 confirmacion = input_fn("Escriba SI para confirmar la eliminacion: ").strip()
                 if confirmacion != "SI":
                     output_fn("Eliminacion cancelada.")
-                elif controller.eliminar_captura(id_captura):
-                    output_fn("EXITO: captura eliminada.")
                 else:
-                    output_fn("ADVERTENCIA: captura no encontrada.")
+                    try:
+                        if controller.eliminar_captura(id_captura):
+                            output_fn("EXITO: captura eliminada.")
+                        else:
+                            output_fn("ADVERTENCIA: captura no encontrada.")
+                    except (RuntimeError, ValueError) as exc:
+                        output_fn(f"ERROR: No se pudo eliminar la captura: {exc}")
         else:
             output_fn("ERROR: Opcion invalida.")
 

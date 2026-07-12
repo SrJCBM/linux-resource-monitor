@@ -1,0 +1,10 @@
+Evidence: hilos_y_fork
+Requirements: RF-07, RF-08, RNF-07
+Executed at (UTC): 2026-07-12T19:14:04.985173+00:00
+Command: /usr/bin/python3 -c from controller.monitor_controller import MonitorController; r=MonitorController().demostrar_concurrencia(); print({'hilos': r['recoleccion']['evidencias'], 'errores': r['recoleccion']['errores'], 'fork': r['fork']})
+Return code: 0
+
+--- STDOUT ---
+{'hilos': [{'modulo': 'memoria', 'hilo': 'monitor-memoria', 'inicio': '2026-07-12T19:14:04.872017+00:00', 'fin': '2026-07-12T19:14:04.873995+00:00'}, {'modulo': 'discos', 'hilo': 'monitor-discos', 'inicio': '2026-07-12T19:14:04.872178+00:00', 'fin': '2026-07-12T19:14:04.878737+00:00'}, {'modulo': 'procesos', 'hilo': 'monitor-procesos', 'inicio': '2026-07-12T19:14:04.872770+00:00', 'fin': '2026-07-12T19:14:04.879655+00:00'}, {'modulo': 'usuarios', 'hilo': 'monitor-usuarios', 'inicio': '2026-07-12T19:14:04.873635+00:00', 'fin': '2026-07-12T19:14:04.879751+00:00'}, {'modulo': 'red', 'hilo': 'monitor-red', 'inicio': '2026-07-12T19:14:04.872554+00:00', 'fin': '2026-07-12T19:14:04.879872+00:00'}, {'modulo': 'cpu', 'hilo': 'monitor-cpu', 'inicio': '2026-07-12T19:14:04.871769+00:00', 'fin': '2026-07-12T19:14:04.978131+00:00'}], 'errores': {}, 'fork': {'parent_pid': 683, 'exit_status': 0, 'child_pid': 694, 'child_parent_pid': 683, 'mensaje': 'monitoreo hijo completado', 'carga_promedio_1m': 0.43}}
+
+--- STDERR ---

@@ -16,9 +16,9 @@ The application is designed for monitoring and registration only. It does not te
 | Week 2 | CPU, memory and `/proc` implementation | Completed |
 | Week 3 | Disk, network, users and processes | Completed |
 | Week 4 | `os.fork()`, threads and CRUD | Completed |
-| Week 5 | Integration, tests and final deliverables | Pending |
+| Week 5 | Integration, tests, manuals and evidence | In progress |
 
-> The repository has completed the Week 4 implementation. The remaining Week 5 work covers final integration, manuals, evidence, corrections and presentation deliverables.
+> Week 5 integration, test coverage, manuals and execution evidence are in progress. The IEEE article, presentation and demonstration video remain pending deliverables.
 
 ## Quick start for reviewers
 
@@ -33,7 +33,7 @@ python3 -m pip install -r requirements.txt
 python3 -m unittest discover -s tests
 ```
 
-The tested implementation covers all six monitoring modules, concurrent collection, the Linux `fork()` demonstration and SQLite CRUD. The general application menu and final deliverables remain part of Week 5.
+The tested implementation covers all six monitoring modules, concurrent collection, the Linux `fork()` demonstration, SQLite CRUD and the integrated terminal menu. The IEEE article, presentation and demonstration video remain part of the pending Week 5 deliverables.
 
 ## Week 2 and Week 3 validation guide
 
@@ -310,7 +310,13 @@ The initial version is expected to rely mainly on the Python standard library. `
 python3 main.py
 ```
 
-The Week 4 entry point opens the SQLite capture-history menu. The application is Linux-specific because live capture uses `/proc`, Linux commands and `os.fork()`. Week 5 will integrate this menu with the complete general monitoring menu.
+The entry point opens the integrated terminal menu for live monitoring, capture history and the concurrency demonstration. The application is Linux-specific because live capture uses `/proc`, Linux commands and `os.fork()`.
+
+Installation and usage details are available in the Spanish manuals:
+
+- [Installation manual](docs/manual_instalacion.md)
+- [Execution manual](docs/manual_ejecucion.md)
+- [Evidence index](docs/evidencias/README.md)
 
 ## Tests
 

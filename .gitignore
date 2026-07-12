@@ -66,6 +66,7 @@ db.sqlite3-journal
 *.sqlite3-journal
 database/data/*
 !database/data/.gitkeep
+~$*.docx
 
 # Flask stuff:
 instance/
@@ -208,6 +209,9 @@ cython_debug/
 # .vscode/
 # Temporary file for partial code execution
 tempCodeRunnerFile.py
+
+# Agent-local planning and review scratch files.
+/.superpowers/
 
 # Ruff stuff:
 .ruff_cache/

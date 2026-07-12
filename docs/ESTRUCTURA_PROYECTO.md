@@ -260,14 +260,19 @@ Implement and test:
 
 ### Week 5
 
-Complete:
+Completed in the current scope:
 
+- Integrated terminal menu for live monitoring, CRUD and concurrency
 - Integration tests
 - Installation and execution manuals
-- Evidence
-- Article
+- Reproducible logs and literal Windows Terminal captures under `docs/evidencias/`
+
+Pending final deliverables:
+
+- IEEE article
 - Presentation
-- Final corrections
+- Demonstration video
+- Final corrections after the team review
 
 ## Notes
 

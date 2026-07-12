@@ -1,0 +1,10 @@
+Evidence: estado_general
+Requirements: RF-01 a RF-06, RF-08
+Executed at (UTC): 2026-07-12T19:14:04.451274+00:00
+Command: /usr/bin/python3 -c from controller.monitor_controller import MonitorController; r=MonitorController().obtener_estado_general(); d=r['datos']; print({'modulos': sorted(d), 'errores': r['errores'], 'cpu': d.get('cpu'), 'memoria': d.get('memoria'), 'discos': len(d.get('discos', [])), 'red': len(d.get('red', [])), 'procesos': len(d.get('procesos', [])), 'usuarios': len(d.get('usuarios', []))})
+Return code: 0
+
+--- STDOUT ---
+{'modulos': ['cpu', 'discos', 'memoria', 'procesos', 'red', 'usuarios'], 'errores': {}, 'cpu': {'procesadores_logicos': 16, 'modelo': '12th Gen Intel(R) Core(TM) i5-12500H', 'frecuencia_mhz': 3110.4, 'carga_promedio_1m': 0.43, 'carga_promedio_5m': 0.24, 'carga_promedio_15m': 0.09, 'porcentaje_uso': 0.0}, 'memoria': {'mem_total_mb': 7784.18, 'mem_usada_mb': 556.21, 'mem_libre_mb': 6900.44, 'mem_disponible_mb': 7227.97, 'swap_total_mb': 2048.0, 'swap_usada_mb': 0.0}, 'discos': 15, 'red': 2, 'procesos': 71, 'usuarios': 1}
+
+--- STDERR ---
