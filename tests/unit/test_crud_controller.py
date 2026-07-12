@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import unittest
+import sqlite3
 
-from controller.crud_controller import CrudController
+from controller.crud_controller import CrudController, CrudOperationError
 
 
 def _datos_completos() -> dict[str, object]:
@@ -66,6 +67,16 @@ class CrudControllerTest(unittest.TestCase):
         self.assertEqual(self.controlador.consultar_captura(7), {"id_captura": 7})
         self.assertTrue(self.controlador.actualizar_captura(7, "nueva", "nota"))
         self.assertTrue(self.controlador.eliminar_captura(7))
+
+    def test_error_sql_se_convierte_en_error_controlado(self) -> None:
+        class RepositorioConError(RepositorioFalso):
+            def listar_capturas(self, fecha=None):
+                raise sqlite3.OperationalError("base no disponible")
+
+        controlador = CrudController(RepositorioConError(), recolector=self.controlador.recolector)
+
+        with self.assertRaises(CrudOperationError):
+            controlador.listar_capturas()
 
 
 if __name__ == "__main__":

@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+import sqlite3
 from collections.abc import Callable
 from typing import Any
 
 from controller.concurrencia_controller import recolectar_con_hilos
 from controller.monitor_controller import consolidar_captura
+
+
+class CrudOperationError(RuntimeError):
+    """Indica un fallo controlado al acceder a las capturas persistidas."""
 
 
 class CrudController:
@@ -28,23 +33,34 @@ class CrudController:
     ) -> int:
         """Recolecta los seis modulos y persiste una captura completa."""
         captura = consolidar_captura(self.recolector())
-        return self.repositorio.crear_captura(
-            captura,
-            etiqueta=etiqueta,
-            comentario=comentario,
-            usuario_registro=usuario_registro,
+        return self._ejecutar_repositorio(
+            lambda: self.repositorio.crear_captura(
+                captura,
+                etiqueta=etiqueta,
+                comentario=comentario,
+                usuario_registro=usuario_registro,
+            )
         )
 
     def listar_capturas(self, fecha: str | None = None) -> list[dict[str, object]]:
-        return self.repositorio.listar_capturas(fecha)
+        return self._ejecutar_repositorio(lambda: self.repositorio.listar_capturas(fecha))
 
     def consultar_captura(self, id_captura: int) -> dict[str, object] | None:
-        return self.repositorio.obtener_captura(id_captura)
+        return self._ejecutar_repositorio(lambda: self.repositorio.obtener_captura(id_captura))
 
     def actualizar_captura(
         self, id_captura: int, etiqueta: str | None, comentario: str | None
     ) -> bool:
-        return self.repositorio.actualizar_captura(id_captura, etiqueta, comentario)
+        return self._ejecutar_repositorio(
+            lambda: self.repositorio.actualizar_captura(id_captura, etiqueta, comentario)
+        )
 
     def eliminar_captura(self, id_captura: int) -> bool:
-        return self.repositorio.eliminar_captura(id_captura)
+        return self._ejecutar_repositorio(lambda: self.repositorio.eliminar_captura(id_captura))
+
+    @staticmethod
+    def _ejecutar_repositorio(operacion: Callable[[], object]) -> object:
+        try:
+            return operacion()
+        except sqlite3.Error as exc:
+            raise CrudOperationError(f"No se pudo acceder a las capturas: {exc}") from exc

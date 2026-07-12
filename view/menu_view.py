@@ -130,8 +130,11 @@ def ejecutar_menu_crud(
         if opcion == "1":
             etiqueta = input_fn("Etiqueta opcional: ").strip() or None
             comentario = input_fn("Comentario opcional: ").strip() or None
-            id_captura = controller.crear_captura(etiqueta, comentario)
-            output_fn(f"EXITO: captura {id_captura} registrada.")
+            try:
+                id_captura = controller.crear_captura(etiqueta, comentario)
+                output_fn(f"EXITO: captura {id_captura} registrada.")
+            except (RuntimeError, ValueError) as exc:
+                output_fn(f"ERROR: No se pudo registrar la captura: {exc}")
         elif opcion == "2":
             fecha = input_fn("Fecha YYYY-MM-DD opcional: ").strip() or None
             _mostrar_listado(controller.listar_capturas(fecha), output_fn)
@@ -196,9 +199,20 @@ def _mostrar_detalle(captura: dict[str, object], output_fn: OutputFn) -> None:
     output_fn(f"Fecha: {captura['fecha_hora']}")
     output_fn(f"Etiqueta: {captura.get('etiqueta') or '-'}")
     output_fn(f"Comentario: {captura.get('comentario') or '-'}")
+    formateadores = {
+        "cpu": format_cpu_info,
+        "memoria": format_memoria_info,
+        "discos": format_disco_info,
+        "red": format_red_info,
+        "procesos": format_procesos_info,
+        "usuarios": format_usuarios_info,
+    }
     for modulo in ("cpu", "memoria", "discos", "red", "procesos", "usuarios"):
         valor = captura.get(modulo)
-        if isinstance(valor, list):
-            output_fn(f"{modulo.capitalize()}: {len(valor)} registros")
+        formateador = formateadores[modulo]
+        if modulo in {"cpu", "memoria"} and isinstance(valor, dict):
+            output_fn(formateador(valor))
+        elif isinstance(valor, list):
+            output_fn(formateador(valor))
         else:
-            output_fn(f"{modulo.capitalize()}: {valor}")
+            output_fn(f"{modulo.capitalize()}: No disponible")
