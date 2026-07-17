@@ -34,7 +34,7 @@ Executed in the isolated worktree:
 ## Commit
 
 - Original SHA: `877814c` (`docs: add IEEE article sources and assets`)
-- Correction SHA: `c6c6f75`.
+- Correction SHA: `929924c`.
 - Correction subject: `docs: correct IEEE bibliography macros and verification report`
 
 ## Concerns
