@@ -212,6 +212,7 @@ tempCodeRunnerFile.py
 
 # Agent-local planning and review scratch files.
 /.superpowers/
+/.worktrees/
 
 # Ruff stuff:
 .ruff_cache/
