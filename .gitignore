@@ -36,6 +36,16 @@ MANIFEST
 pip-log.txt
 pip-delete-this-directory.txt
 
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.out
+*.synctex.gz
+*.toc
+
 # Unit test / coverage reports
 htmlcov/
 .tox/
