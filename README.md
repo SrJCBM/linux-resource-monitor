@@ -428,7 +428,5 @@ The final project includes:
 
 ## Team
 
-- `[Student 1]`
-- `[Student 2]`
-
-Replace the placeholders with the team members' names before final delivery.
+- Julio Cesar Blacio Machuca
+- Ariel Jose Llumiquinga Ñacato
