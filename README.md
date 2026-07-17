@@ -18,7 +18,7 @@ The application is designed for monitoring and registration only. It does not te
 | Week 4 | `os.fork()`, threads and CRUD | Completed |
 | Week 5 | Integration, tests, manuals and evidence | In progress |
 
-> Week 5 integration, test coverage, manuals and execution evidence are in progress. The IEEE article, presentation and demonstration video remain pending deliverables.
+> Week 5 integration, test coverage, manuals and execution evidence are in progress. The bilingual IEEE article drafts are complete and validated at four pages each; the presentation and demonstration video remain pending deliverables.
 
 ## Quick start for reviewers
 
@@ -33,7 +33,7 @@ python3 -m pip install -r requirements.txt
 python3 -m unittest discover -s tests
 ```
 
-The tested implementation covers all six monitoring modules, concurrent collection, the Linux `fork()` demonstration, SQLite CRUD and the integrated terminal menu. The IEEE article, presentation and demonstration video remain part of the pending Week 5 deliverables.
+The tested implementation covers all six monitoring modules, concurrent collection, the Linux `fork()` demonstration, SQLite CRUD and the integrated terminal menu. The bilingual IEEE article drafts are complete and validated at four pages each. The presentation and demonstration video remain pending Week 5 deliverables.
 
 ## Week 2 and Week 3 validation guide
 
@@ -409,7 +409,9 @@ Project documentation is stored under `docs/`:
 - Week 1 requirements, architecture and database design.
 - Installation manual.
 - Execution manual.
-- Scientific article material.
+- Complete bilingual IEEE article drafts, validated at four pages each:
+  - [Spanish LaTeX source](docs/articulo/monitor_recursos_linux_es.tex) and [final Spanish PDF](docs/articulo/monitor_recursos_linux_es.pdf).
+  - [English LaTeX source](docs/articulo/linux_resource_monitor_en.tex) and [final English PDF](docs/articulo/linux_resource_monitor_en.pdf).
 - Presentation material.
 - Demonstration evidence.
 
@@ -426,7 +428,5 @@ The final project includes:
 
 ## Team
 
-- `[Student 1]`
-- `[Student 2]`
-
-Replace the placeholders with the team members' names before final delivery.
+- Julio Cesar Blacio Machuca
+- Ariel Jose Llumiquinga Ñacato
