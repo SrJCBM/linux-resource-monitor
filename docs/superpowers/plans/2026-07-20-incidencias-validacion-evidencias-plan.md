@@ -401,7 +401,7 @@ from the inspected 144-DPI renders:
     registro = crop(page4, (446, 1438, 1188, 1913))
     eliminacion = crop(page5, (594, 1094, 1469, 1563))
     actualizacion = crop(page7, (594, 1813, 2188, 2521))
-    listado = crop(page7, (446, 2667, 1385, 3146))
+    listado = crop(page7, (446, 2667, 1385, 3400))
     concurrencia = crop(page8, (296, 396, 1708, 1458))
 
 Save `general` and `concurrencia` directly using `optimize=True`. Build the
