@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 import subprocess
-from datetime import datetime, timedelta
+from datetime import datetime
 
 
 MESES_WHO = {
@@ -40,12 +40,19 @@ def _run_command(args: list[str], timeout: int = 5) -> str:
 def normalizar_inicio_sesion(
     valor: object, ahora: datetime | None = None
 ) -> str | None:
-    """Convierte fechas ISO o de ``who`` a ``YYYY-MM-DD HH:MM``."""
+    """Normaliza fechas ISO o de ``who`` e infiere el ano no futuro.
+
+    ``None`` se conserva para sesiones sin fecha. Los demas valores deben ser
+    texto ISO o texto abreviado ``Mon DD HH:MM``; un formato invalido genera un
+    error para que la persistencia pueda rechazar una captura inconsistente.
+    """
     if valor is None:
         return None
-    texto = str(valor).strip()
+    if not isinstance(valor, str):
+        raise TypeError("inicio_sesion debe ser texto o None.")
+    texto = valor.strip()
     if not texto:
-        return None
+        raise ValueError("inicio_sesion no puede estar vacio.")
 
     try:
         return datetime.strptime(texto, "%Y-%m-%d %H:%M").strftime(
@@ -56,25 +63,29 @@ def normalizar_inicio_sesion(
 
     partes = texto.split()
     if len(partes) != 3 or partes[0] not in MESES_WHO:
-        return None
+        raise ValueError(f"Formato de inicio_sesion no reconocido: {valor}")
     try:
         mes = MESES_WHO[partes[0]]
         dia = int(partes[1])
         hora, minuto = (int(parte) for parte in partes[2].split(":"))
         referencia = ahora or datetime.now()
-        candidato = datetime(referencia.year, mes, dia, hora, minuto)
     except (TypeError, ValueError):
-        return None
+        raise ValueError(f"Formato de inicio_sesion no reconocido: {valor}") from None
 
-    if candidato > referencia + timedelta(days=1):
-        candidato = candidato.replace(year=referencia.year - 1)
-    return candidato.strftime("%Y-%m-%d %H:%M")
+    for anio in (referencia.year, referencia.year - 1):
+        try:
+            candidato = datetime(anio, mes, dia, hora, minuto)
+        except ValueError:
+            continue
+        if candidato <= referencia:
+            return candidato.strftime("%Y-%m-%d %H:%M")
+    raise ValueError(f"Fecha de inicio_sesion no valida: {valor}")
 
 
 def parse_who_output(
     text: str, ahora: datetime | None = None
 ) -> list[dict[str, str]]:
-    """Parsea usuario, terminal e inicio de sesion desde who."""
+    """Parsea ``who`` y devuelve inicios ISO; omite lineas malformadas."""
     usuarios: list[dict[str, str]] = []
     for line in text.splitlines():
         if not line.strip():
@@ -89,7 +100,10 @@ def parse_who_output(
         else:
             inicio_sesion = f"{parts[2]} {parts[3]}"
 
-        inicio_normalizado = normalizar_inicio_sesion(inicio_sesion, ahora)
+        try:
+            inicio_normalizado = normalizar_inicio_sesion(inicio_sesion, ahora)
+        except (TypeError, ValueError):
+            continue
         if inicio_normalizado is None:
             continue
 

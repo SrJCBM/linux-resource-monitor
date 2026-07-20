@@ -183,6 +183,17 @@ class RepositorioCapturasTest(unittest.TestCase):
         inicio = captura["usuarios"][0]["inicio_sesion"]
         datetime.strptime(inicio, "%Y-%m-%d %H:%M")
 
+    def test_inicio_sesion_invalido_revierte_la_captura(self) -> None:
+        for valor in ("not-a-date", 1234):
+            with self.subTest(valor=valor):
+                datos = _captura_completa()
+                datos["usuarios"][0]["inicio_sesion"] = valor
+
+                with self.assertRaises((TypeError, ValueError)):
+                    self.repositorio.crear_captura(datos)
+
+                self.assertEqual(self.repositorio.listar_capturas(), [])
+
 
 if __name__ == "__main__":
     unittest.main()

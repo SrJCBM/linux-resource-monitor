@@ -103,12 +103,18 @@ In model/usuarios_model.py:
         except (TypeError, ValueError):
             return None
 
-        if candidato > referencia + timedelta(days=1):
-            candidato = candidato.replace(year=referencia.year - 1)
-        return candidato.strftime("%Y-%m-%d %H:%M")
+        for anio in (referencia.year, referencia.year - 1):
+            try:
+                candidato = datetime(anio, mes, dia, hora, minuto)
+            except ValueError:
+                continue
+            if candidato <= referencia:
+                return candidato.strftime("%Y-%m-%d %H:%M")
+        raise ValueError(f"Fecha de inicio_sesion no valida: {valor}")
 
 The function must accept None, strict ISO minute text, and month-name text.
-Month-name candidates more than one day in the future use the previous year.
+Month-name candidates in the future use the previous valid year. Invalid
+non-null values raise before persistence so the complete transaction rolls back.
 parse_who_output normalizes before appending each dictionary.
 
 Import this function in model/repositorio.py and remove its duplicate

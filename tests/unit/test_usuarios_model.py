@@ -37,6 +37,24 @@ class UsuariosModelTest(unittest.TestCase):
 
         self.assertEqual(result[0]["inicio_sesion"], "2025-12-31 23:59")
 
+    def test_parse_who_output_uses_previous_year_for_same_day_future_time(self):
+        text = "ariel seat0 Jul 18 18:00\n"
+
+        result = usuarios_model.parse_who_output(
+            text, ahora=datetime(2026, 7, 18, 17, 11)
+        )
+
+        self.assertEqual(result[0]["inicio_sesion"], "2025-07-18 18:00")
+
+    def test_parse_who_output_recovers_leap_day_from_previous_year(self):
+        text = "ariel seat0 Feb 29 23:59\n"
+
+        result = usuarios_model.parse_who_output(
+            text, ahora=datetime(2025, 3, 1, 0, 10)
+        )
+
+        self.assertEqual(result[0]["inicio_sesion"], "2024-02-29 23:59")
+
 
 if __name__ == "__main__":
     unittest.main()

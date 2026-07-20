@@ -211,6 +211,7 @@ def _leer_id(input_fn: InputFn, output_fn: OutputFn) -> int | None:
 
 
 def _mostrar_listado(capturas: list[dict[str, object]], output_fn: OutputFn) -> None:
+    """Muestra un orden visual consecutivo separado del ID SQLite estable."""
     if not capturas:
         output_fn("No hay capturas almacenadas.")
         return
@@ -223,6 +224,7 @@ def _mostrar_listado(capturas: list[dict[str, object]], output_fn: OutputFn) -> 
 
 
 def _mostrar_capturas_disponibles(controller: Any, output_fn: OutputFn) -> bool:
+    """Presenta las capturas disponibles antes de solicitar un identificador."""
     capturas = controller.listar_capturas()
     if not capturas:
         output_fn("No hay capturas almacenadas.")

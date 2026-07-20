@@ -65,7 +65,7 @@ class RepositorioCapturas:
             conexion.close()
 
     def obtener_captura(self, id_captura: int) -> dict[str, Any] | None:
-        """Obtiene metadatos y metricas relacionadas de una captura."""
+        """Obtiene una captura y reconstruye sus metricas de disco en bytes."""
         conexion = abrir_conexion(self.ruta_bd)
         try:
             fila = conexion.execute(
@@ -126,7 +126,7 @@ class RepositorioCapturas:
             conexion.close()
 
     def eliminar_captura(self, id_captura: int) -> bool:
-        """Elimina una captura; SQLite propaga la eliminacion a sus metricas."""
+        """Elimina en cascada y reinicia su secuencia solo si no quedan capturas."""
         conexion = abrir_conexion(self.ruta_bd)
         try:
             with conexion:
