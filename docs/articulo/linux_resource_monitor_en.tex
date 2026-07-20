@@ -23,7 +23,7 @@ Sangolqu\'i, Ecuador}
 \maketitle
 
 \begin{abstract}
-Monitoring system resources is essential to understanding the current state of an operating system, yet it can remain an abstract concept when examined only through isolated commands. This paper presents the design and implementation of a Linux terminal application developed in Python 3. The application organizes the six monitoring modules according to the Model--View--Controller pattern: CPU, memory and \textit{swap}, processes, connected users, filesystems, and networking. Data are obtained directly from the \texttt{/proc} virtual filesystem and, where appropriate, from native commands executed in a controlled manner. To meet operating-systems requirements, the application explicitly creates threads with \texttt{threading.Thread} and a child process with \texttt{os.fork()}, communicating through a pipe. Complete captures are persisted in SQLite and managed through CRUD operations. Verification performed on Ubuntu under WSL recorded 56 successful tests with no failures. The result is a traceable educational foundation that integrates observation, concurrency, and persistence without replacing system interfaces with high-level monitoring dependencies.
+Monitoring system resources is essential to understanding the current state of an operating system, yet it can remain an abstract concept when examined only through isolated commands. This paper presents the design and implementation of a Linux terminal application developed in Python 3. The application organizes the six monitoring modules according to the Model--View--Controller pattern: CPU, memory and \textit{swap}, processes, connected users, filesystems, and networking. Data are obtained directly from the \texttt{/proc} virtual filesystem and, where appropriate, from native commands executed in a controlled manner. To meet operating-systems requirements, the application explicitly creates threads with \texttt{threading.Thread} and a child process with \texttt{os.fork()}, communicating through a pipe. Complete captures are persisted in SQLite and managed through CRUD operations. Verification performed on Ubuntu under WSL recorded 69 successful tests with no failures or skips in 0.870~s. The result is a traceable educational foundation that integrates observation, concurrency, and persistence without replacing system interfaces with high-level monitoring dependencies.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -65,7 +65,7 @@ where both counters come from the aggregate CPU line. For memory, the distinctio
 \subsection{Data Contracts}
 Models do not return terminal blocks. CPU and memory produce dictionaries; disk, networking, processes, and users produce lists of dictionaries, with one element per mount, interface, process, or session. Stable keys include \texttt{porcentaje\_uso}, \texttt{mem\_disponible\_mb}, \texttt{punto\_montaje}, \texttt{usuario\_propietario}, \texttt{direccion\_ip}, and \texttt{inicio\_sesion}. The controller preserves these structures, while the view adds units, rounds values to two decimal places, and builds ASCII tables.
 
-Each parser accepts text and can therefore be tested without querying the current computer. Networking combines counters from \texttt{/proc/net/dev} with one address per interface: it prefers the first IPv4 address and uses IPv6 as a fallback; if no address exists, it retains \texttt{None}. Disk data are parsed as bytes from \texttt{df -P -B1} before conversion for display or persistence. For users, \texttt{inicio\_sesion} retains the instant reported by \texttt{who}; duration is calculated when displayed and does not replace the stored value.
+Each parser accepts text and can therefore be tested without querying the current computer. Networking combines counters from \texttt{/proc/net/dev} with one address per interface: it prefers the first IPv4 address and uses IPv6 as a fallback; if no address exists, it retains \texttt{None}. Disk data are parsed as bytes from \texttt{df -P -B1}; persistence converts them to the GB columns, and historical reads reconstruct bytes before returning the contract to the view. For users, the abbreviated instant reported by \texttt{who} is normalized as \texttt{YYYY-MM-DD HH:MM}, including year rollover; duration is calculated when \texttt{inicio\_sesion} is displayed and does not replace the stored value.
 
 \subsection{Concurrency and Safety}
 Six independent threads, one for each module, are created before the application waits for their completion. Results, errors, and evidence are protected by a lock so that a partial response can be consolidated when a reading fails. The child process starts only after those threads have finished; this order avoids calling \texttt{fork()} while other threads are active. The child reads a load metric, communicates a JSON message through a pipe, and is reaped by the parent with \texttt{waitpid()}.
@@ -80,7 +80,7 @@ Parsers ignore empty or nonconforming lines when they can continue and reject mi
 \subsection{Verification Strategy}
 Unit tests validate parsing functions against sample files so that their results do not depend solely on the current machine. Persistence tests use temporary SQLite databases and cover CRUD operations and cascade deletion. Integrations requiring \texttt{fork()} are explicitly limited to Linux. The documented execution was performed on Ubuntu under WSL; therefore, this article does not extend that evidence to other systems.
 
-Verification also covers contracts between layers: the controller preserves partial errors, an incomplete capture is rejected, connections enable foreign keys, update affects only metadata, and deletion removes child rows. Interface tests exercise invalid options, nonpositive identifiers, deletion cancellation, \texttt{EXITO}, \texttt{ADVERTENCIA}, and \texttt{ERROR} messages, and limits for long listings.
+Verification also covers contracts between layers: the controller preserves partial errors, an incomplete capture is rejected, connections enable foreign keys, update affects only metadata, and deletion removes child rows. Interface tests exercise real dates under a strict format, nonpositive identifiers, explicit confirmation variants, display numbering, deletion cancellation, and \texttt{EXITO}, \texttt{ADVERTENCIA}, and \texttt{ERROR} messages.
 
 \section{Solution Architecture and Development}
 \subsection{MVC Separation}
@@ -129,23 +129,24 @@ The relational design distinguishes cardinalities. CPU and memory have a one-to-
 Writing opens an independent connection and enters the transaction context before inserting the parent row and the six metric families. If a required key is absent, a contract type is invalid, or SQLite rejects a row, the context rolls back the set and the \texttt{finally} block closes the connection. During reading, the repository reconstructs the same contract used by the view: one dictionary for CPU and memory and lists for the one-to-many relationships.
 
 \subsection{Terminal Interface Criteria}
-The main and history menus use numbered options. Invalid input keeps the loop active; identifiers must be positive integers, and deletion requires the user to type \texttt{SI}. Process and filesystem listings are initially limited to 20 rows and state how many records are displayed relative to the total. These decisions prevent a large snapshot from displacing terminal context indefinitely.
+The main and history menus use numbered options. Invalid input keeps the loop active, and the optional filter requires a real date in \texttt{YYYY-MM-DD} format. Available captures are shown before consulting, updating, or deleting; each row has a sequential \texttt{N.} separate from its persistent ID. Existing IDs are not renumbered, and the sequence resets only when history becomes empty. Deletion still requires an explicit \texttt{SI}, accepted without case or accent sensitivity. Long listings are initially limited to 20 rows and state how many records are displayed relative to the total.
 
 Output does not depend on color. Percentages are accompanied by \texttt{NORMAL}, \texttt{ADVERTENCIA}, or \texttt{CRITICO}; values include units and two decimal places, and the overall state includes an update timestamp. Missing values are expressed as \emph{No disponible} or with specific empty-list messages. The interface therefore remains understandable in a plain-text terminal and through keyboard operation.
 
 \section{Results and Validation}
-Table~\ref{tab:resultados} summarizes an execution verified on July 12, 2026, on Ubuntu under WSL. The suite was run with \texttt{python3 -m unittest discover -s tests}; the other records exercised the monitoring controller, a temporary SQLite repository, and the concurrency demonstration. The values are a functional verification snapshot, not a performance benchmark or a platform comparison.
+Table~\ref{tab:resultados} summarizes the final validation and manual evidence obtained on July 18, 2026, on Ubuntu. The suites were run with \texttt{python -m unittest discover -s tests} on Windows and with \texttt{python3} on Ubuntu under WSL; the other records exercised the monitoring controller, a temporary SQLite repository, and the concurrency demonstration. The documented durations belong to those functional runs and are not presented as performance measurements.
 
 \begin{table}[t]
 \caption{Verified results from the documented execution.}
 \label{tab:resultados}
 \centering
 \footnotesize
-\begin{tabular}{@{}p{0.25\columnwidth}p{0.43\columnwidth}p{0.20\columnwidth}@{}}
+\begin{tabular}{@{}p{0.24\columnwidth}p{0.48\columnwidth}p{0.16\columnwidth}@{}}
 \toprule
 Validation & Result & Status \\
 \midrule
-Full suite & 56 tests & 0 failures \\
+Windows suite & 69 tests; 2 skips; 0.261~s & 0 failures \\
+Ubuntu WSL suite & 69 tests; 0 skips; 0.870~s & 0 failures \\
 Overall state & 6 modules & 0 errors \\
 SQLite CRUD & Create/list/update/delete & Correct \\
 Concurrency & 6 threads + 1 child & Exit status 0 \\
@@ -153,24 +154,39 @@ Concurrency & 6 threads + 1 child & Exit status 0 \\
 \end{tabular}
 \end{table}
 
-The overall-state evidence recorded the CPU, memory, disk, process, network, and user modules with an empty error dictionary. In the persistence test, a capture was created, listed, had its metadata updated, and was deleted; the final listing contained no records. In the concurrency demonstration, six pieces of evidence with \texttt{monitor-} names and start and end markers were produced, followed by a child with a PID different from the parent's and an exit code of zero.
+The overall-state evidence recorded all six modules with an empty error dictionary; Fig.~\ref{fig:estado-general} shows CPU, memory, disk, and networking in the Ubuntu terminal. In the persistence test, a capture was created, listed, had its metadata updated, and was deleted. The concurrency demonstration produced six threads without errors, followed by a child with a PID different from the parent's and an exit code of zero, as shown in Fig.~\ref{fig:concurrencia}.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figuras/evidencia_estado_general_ubuntu.png}
+\caption{Overall state observed on Ubuntu: CPU, memory, filesystems, and networking.}
+\label{fig:estado-general}
+\end{figure}
 
 The suite combines deterministic tests and integration checks. Parsers for CPU, memory, disk, networking, processes, and users consume fixture files; the repository is created in a temporary directory and verifies both the reconstructed detail and cascade behavior; controllers are exercised with replaceable collectors and repositories; and Linux cases validate the integrated flow and a real \texttt{fork()}. This composition reduces dependence on ephemeral values without removing the final check on the target system.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.86\textwidth]{figuras/evidencia_crud_ubuntu.png}
+\caption{Pre-correction CRUD diagnostic evidence recorded during Ubuntu validation.}
+\label{fig:crud}
+\end{figure*}
+
+Manual Ubuntu validation produced five corrected findings. First, abbreviated \texttt{who} timestamps were normalized before calculating live duration. Second, historical disk reads convert stored GB values back to the byte contract expected by the view. Third, the filter rejects malformed formats and invalid calendar dates instead of performing an empty search. Fourth, \texttt{N.} numbers the display without replacing the stable ID; the sequence returns to one only after the last capture is deleted. Fifth, consult, update, and delete display history first, while explicit \texttt{SI} confirmation remains mandatory but ignores case and the accent. Fig.~\ref{fig:crud} retains pre-correction diagnostic evidence, including the \texttt{ID} header and ID~2 appearing after deletion; it is not proof of the corrected interface. That behavior is verified by regression tests and the complete WSL suite.
 
 Acceptance criteria were interpreted according to the nature of each datum. Key sets and formulas are required for CPU and memory, command records must be parseable, networking retains one primary address or explicit absence, the live view continues after partial failures, and history writes remain atomic. Exact equality is not required between counts taken at different instants, and observed execution times are not generalized.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{figuras/evidencia_hilos_fork.png}
-\caption{Evidence of six threads and one child process running under WSL.}
+\includegraphics[width=\columnwidth]{figuras/evidencia_concurrencia_ubuntu.png}
+\caption{Ubuntu evidence of six threads without errors and a child process exiting with status zero.}
 \label{fig:concurrencia}
 \end{figure}
 
-\balance
 \section{Conclusions}
 The monitor integrates the functional requirements for observing CPU, memory, processes, users, disk, and networking in a Linux terminal application. MVC separation keeps resource reading, coordination, and presentation distinct; in turn, the repository centralizes SQLite persistence and CRUD operations.
 
-The demonstration of six threads and one child illustrates a relevant ordering decision: threads finish before \texttt{fork()} begins, and the parent retrieves the child through a pipe and \texttt{waitpid()}. The transaction for every complete capture and cascading foreign keys support the consistency of stored data. The documented verification supports the behavior described without attributing performance properties to it.
+The demonstration of six threads and one child illustrates a relevant ordering decision: threads finish before \texttt{fork()} begins, and the parent retrieves the child through a pipe and \texttt{waitpid()}. The transaction for every complete capture and cascading foreign keys support the consistency of stored data. The five corrected incidents also show the importance of validating contracts among collection, persistence, and presentation. The documented verification supports the behavior described without attributing performance properties to it.
 
 As limitations, the readings depend on the available Linux interfaces and represent changing system states. Future work may study portability in the collection layer or longer-duration samples while preserving the architectural separation and without claiming that these extensions form part of the current version.
 

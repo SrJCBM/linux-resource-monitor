@@ -24,7 +24,7 @@ Sangolqu\'i, Ecuador}
 \maketitle
 
 \begin{abstract}
-La observaci\'on de recursos es una actividad esencial para comprender el estado de un sistema operativo, pero puede resultar abstracta cuando se estudia solo mediante comandos aislados. Este trabajo presenta el dise\~no y la implementaci\'on de una aplicaci\'on de terminal para Linux desarrollada en Python 3. La propuesta organiza seis m\'odulos de monitoreo mediante el patr\'on Modelo--Vista--Controlador: CPU, memoria y \textit{swap}, procesos, usuarios conectados, sistemas de archivos y red. Los datos se obtienen directamente del sistema de archivos virtual \texttt{/proc} y, cuando corresponde, de comandos nativos ejecutados de forma controlada. Como parte de los requisitos de sistemas operativos, la aplicaci\'on crea expl\'icitamente hilos con \texttt{threading.Thread} y un proceso hijo con \texttt{os.fork()}, cuya comunicaci\'on se realiza mediante una tuber\'ia. Las capturas completas se persisten en SQLite y se administran con operaciones CRUD. La verificaci\'on ejecutada en Ubuntu bajo WSL registr\'o 56 pruebas correctas, sin fallos. El resultado muestra una base did\'actica trazable que integra observaci\'on, concurrencia y persistencia sin sustituir las interfaces del sistema por dependencias de monitoreo de alto nivel.
+La observaci\'on de recursos es una actividad esencial para comprender el estado de un sistema operativo, pero puede resultar abstracta cuando se estudia solo mediante comandos aislados. Este trabajo presenta el dise\~no y la implementaci\'on de una aplicaci\'on de terminal para Linux desarrollada en Python 3. La propuesta organiza seis m\'odulos de monitoreo mediante el patr\'on Modelo--Vista--Controlador: CPU, memoria y \textit{swap}, procesos, usuarios conectados, sistemas de archivos y red. Los datos se obtienen directamente del sistema de archivos virtual \texttt{/proc} y, cuando corresponde, de comandos nativos ejecutados de forma controlada. Como parte de los requisitos de sistemas operativos, la aplicaci\'on crea expl\'icitamente hilos con \texttt{threading.Thread} y un proceso hijo con \texttt{os.fork()}, cuya comunicaci\'on se realiza mediante una tuber\'ia. Las capturas completas se persisten en SQLite y se administran con operaciones CRUD. La verificaci\'on ejecutada en Ubuntu bajo WSL registr\'o 69 pruebas correctas, sin fallos ni omisiones, en 0,870~s. El resultado muestra una base did\'actica trazable que integra observaci\'on, concurrencia y persistencia sin sustituir las interfaces del sistema por dependencias de monitoreo de alto nivel.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -66,7 +66,7 @@ donde ambos contadores proceden de la l\'inea agregada de CPU. Para memoria, se 
 \subsection{Contratos de datos}
 Los modelos no devuelven bloques de terminal. CPU y memoria producen diccionarios; disco, red, procesos y usuarios producen listas de diccionarios, un elemento por montaje, interfaz, proceso o sesi\'on. Entre las claves estables se encuentran \texttt{porcentaje\_uso}, \texttt{mem\_disponible\_mb}, \texttt{punto\_montaje}, \texttt{usuario\_propietario}, \texttt{direccion\_ip} e \texttt{inicio\_sesion}. El controlador conserva estas estructuras y la vista es la responsable de agregar unidades, redondear a dos decimales y construir tablas ASCII.
 
-Cada parser acepta texto y puede probarse sin consultar el equipo actual. La red combina los contadores de \texttt{/proc/net/dev} con una sola direcci\'on por interfaz: prioriza la primera IPv4 y usa IPv6 como alternativa; si no existe una direcci\'on, conserva \texttt{None}. El disco analiza bytes de \texttt{df -P -B1} antes de convertirlos para presentaci\'on o persistencia. En usuarios, \texttt{inicio\_sesion} mantiene el instante informado por \texttt{who}; la duraci\'on se calcula al mostrarlo y no reemplaza el dato almacenado.
+Cada parser acepta texto y puede probarse sin consultar el equipo actual. La red combina los contadores de \texttt{/proc/net/dev} con una sola direcci\'on por interfaz: prioriza la primera IPv4 y usa IPv6 como alternativa; si no existe una direcci\'on, conserva \texttt{None}. El disco analiza bytes de \texttt{df -P -B1}; al persistir convierte esos valores a las columnas en GB y, al consultar el historial, el repositorio los reconstruye en bytes antes de entregarlos a la vista. En usuarios, el instante abreviado informado por \texttt{who} se normaliza como \texttt{YYYY-MM-DD HH:MM}, incluso alrededor del cambio de a\~no; la duraci\'on se calcula al mostrar \texttt{inicio\_sesion} y no reemplaza el dato almacenado.
 
 \subsection{Concurrencia y seguridad}
 Se crean seis hilos independientes, uno por m\'odulo, antes de esperar su finalizaci\'on. Los resultados, errores y evidencias se protegen con un bloqueo para consolidar una respuesta parcial cuando una lectura falla. Solo despu\'es de finalizar esos hilos se inicia el proceso hijo; este orden evita invocar \texttt{fork()} con otros hilos activos. El hijo lee una m\'etrica de carga, comunica un mensaje JSON por una tuber\'ia y el padre lo recolecta con \texttt{waitpid()}.
@@ -81,7 +81,7 @@ Los parsers ignoran l\'ineas vac\'ias o no conformes cuando pueden continuar y r
 \subsection{Estrategia de verificaci\'on}
 Las pruebas unitarias validan funciones de an\'alisis contra archivos de muestra para que los resultados no dependan solo de la m\'aquina actual. Las pruebas de persistencia usan bases SQLite temporales, incluyendo las operaciones CRUD y la eliminaci\'on en cascada. Las integraciones que requieren \texttt{fork()} se limitan expl\'icitamente a Linux. La ejecuci\'on documentada se realiz\'o en Ubuntu bajo WSL; por tanto, este art\'iculo no extiende esa evidencia a otros sistemas.
 
-La verificaci\'on cubre tambi\'en contratos entre capas: que el controlador preserve errores parciales, que una captura incompleta sea rechazada, que las conexiones activen claves for\'aneas, que la actualizaci\'on afecte solo metadatos y que la eliminaci\'on retire las filas hijas. Para la interfaz se prueban opciones inv\'alidas, identificadores no positivos, cancelaci\'on de borrado, mensajes de \texttt{EXITO}, \texttt{ADVERTENCIA} y \texttt{ERROR}, y el l\'imite de listados extensos.
+La verificaci\'on cubre tambi\'en contratos entre capas: que el controlador preserve errores parciales, que una captura incompleta sea rechazada, que las conexiones activen claves for\'aneas, que la actualizaci\'on afecte solo metadatos y que la eliminaci\'on retire las filas hijas. Para la interfaz se prueban fechas reales con formato estricto, identificadores no positivos, variantes de la confirmaci\'on expl\'icita, numeraci\'on visual, cancelaci\'on de borrado y mensajes de \texttt{EXITO}, \texttt{ADVERTENCIA} y \texttt{ERROR}.
 
 \section{Arquitectura y desarrollo de la soluci\'on}
 \subsection{Separaci\'on MVC}
@@ -130,23 +130,24 @@ El dise\~no relacional distingue cardinalidades. CPU y memoria tienen una relaci
 La escritura abre una conexi\'on independiente y entra en el contexto transaccional antes de insertar la fila padre y las seis familias de m\'etricas. Si una clave requerida no existe, un tipo de contrato es incorrecto o SQLite rechaza una fila, el contexto revierte el conjunto y el bloque \texttt{finally} cierra la conexi\'on. En la lectura, el repositorio reconstruye el mismo contrato empleado por la vista: un diccionario para CPU y memoria, y listas para las relaciones uno a muchos.
 
 \subsection{Criterios de interfaz terminal}
-El men\'u principal y el historial se operan con opciones numeradas. Una entrada inv\'alida conserva el bucle activo; los identificadores deben ser enteros positivos y la eliminaci\'on exige escribir \texttt{SI}. Los listados de procesos y sistemas de archivos se limitan inicialmente a 20 filas e indican cu\'antos registros se muestran respecto del total. Estas decisiones evitan que una instant\'anea extensa desplace indefinidamente el contexto de la terminal.
+El men\'u principal y el historial se operan con opciones numeradas. Una entrada inv\'alida conserva el bucle activo y el filtro opcional exige una fecha real en formato \texttt{YYYY-MM-DD}. Antes de consultar, actualizar o eliminar, se presentan las capturas disponibles; cada fila muestra un n\'umero secuencial \texttt{N.} separado del ID persistente. Los IDs existentes no se renumeran y la secuencia se reinicia solo cuando el historial queda vac\'io. La eliminaci\'on exige una confirmaci\'on \texttt{SI} expl\'icita, aceptada sin distinguir may\'usculas ni acento. Los listados extensos se limitan inicialmente a 20 filas e indican cu\'antos registros se muestran respecto del total.
 
 La salida no depende del color. Los porcentajes se acompa\~nan con \texttt{NORMAL}, \texttt{ADVERTENCIA} o \texttt{CRITICO}; los valores incluyen unidades y dos decimales, y el estado general muestra fecha de actualizaci\'on. Las ausencias se expresan como \emph{No disponible} o mediante mensajes espec\'ificos para listas vac\'ias. Por ello, la interfaz sigue siendo comprensible en una terminal de texto simple y mediante teclado.
 
 \section{Resultados y validaci\'on}
-La Tabla~\ref{tab:resultados} resume una ejecuci\'on verificada el 12 de julio de 2026 en Ubuntu bajo WSL. La suite se ejecut\'o con \texttt{python3 -m unittest discover -s tests}; los dem\'as registros aplicaron el controlador de monitoreo, un repositorio SQLite temporal y la demostraci\'on de concurrencia. Los valores son una instant\'anea de verificaci\'on funcional, no un punto de referencia de rendimiento ni una comparaci\'on de plataformas.
+La Tabla~\ref{tab:resultados} resume la validaci\'on final y la evidencia manual obtenida el 18 de julio de 2026 en Ubuntu. Las suites se ejecutaron con \texttt{python -m unittest discover -s tests} en Windows y con \texttt{python3} en Ubuntu bajo WSL; los dem\'as registros aplicaron el controlador de monitoreo, un repositorio SQLite temporal y la demostraci\'on de concurrencia. Los tiempos documentados corresponden a esas ejecuciones funcionales y no se presentan como mediciones de rendimiento.
 
 \begin{table}[t]
 \caption{Resultados verificados de la ejecuci\'on documentada.}
 \label{tab:resultados}
 \centering
 \footnotesize
-\begin{tabular}{@{}p{0.25\columnwidth}p{0.43\columnwidth}p{0.20\columnwidth}@{}}
+\begin{tabular}{@{}p{0.24\columnwidth}p{0.48\columnwidth}p{0.16\columnwidth}@{}}
 \toprule
 Validaci\'on & Resultado & Estado \\
 \midrule
-Suite completa & 56 pruebas & 0 fallos \\
+Suite Windows & 69 pruebas; 2 omitidas; 0,261~s & 0 fallos \\
+Suite Ubuntu WSL & 69 pruebas; 0 omitidas; 0,870~s & 0 fallos \\
 Estado general & 6 m\'odulos & 0 errores \\
 CRUD SQLite & Crear/listar/actualizar/eliminar & Correcto \\
 Concurrencia & 6 hilos + 1 hijo & Exit status 0 \\
@@ -154,23 +155,39 @@ Concurrencia & 6 hilos + 1 hijo & Exit status 0 \\
 \end{tabular}
 \end{table}
 
-La evidencia de estado general registr\'o los m\'odulos CPU, memoria, discos, procesos, red y usuarios, con un diccionario de errores vac\'io. En la prueba de persistencia se cre\'o una captura, se list\'o, se actualizaron sus metadatos y se elimin\'o; el listado final qued\'o sin registros. En la demostraci\'on de concurrencia se generaron seis evidencias con nombres \texttt{monitor-} y marcas de inicio y fin, seguidas de un hijo con PID distinto al padre y c\'odigo de salida cero.
+La evidencia de estado general registr\'o los seis m\'odulos con un diccionario de errores vac\'io; la Fig.~\ref{fig:estado-general} muestra CPU, memoria, disco y red en la terminal de Ubuntu. En la prueba de persistencia se cre\'o una captura, se list\'o, se actualizaron sus metadatos y se elimin\'o. La demostraci\'on de concurrencia produjo seis hilos sin errores, seguida de un hijo con PID distinto al padre y c\'odigo de salida cero, como se observa en la Fig.~\ref{fig:concurrencia}.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figuras/evidencia_estado_general_ubuntu.png}
+\caption{Estado general observado en Ubuntu: CPU, memoria, sistemas de archivos y red.}
+\label{fig:estado-general}
+\end{figure}
 
 La suite combina pruebas deterministas y verificaciones de integraci\'on. Los parsers de CPU, memoria, disco, red, procesos y usuarios consumen archivos de muestra; el repositorio se crea en un directorio temporal y comprueba tanto el detalle reconstruido como la cascada; los controladores se ejercitan con recolectores y repositorios sustituibles; y los casos de Linux validan el flujo integrado y el \texttt{fork()} real. Esta composici\'on reduce la dependencia de valores ef\'imeros sin eliminar la comprobaci\'on final sobre el sistema objetivo.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.86\textwidth]{figuras/evidencia_crud_ubuntu.png}
+\caption{Evidencia diagn\'ostica CRUD previa a las correcciones, registrada durante la validaci\'on en Ubuntu.}
+\label{fig:crud}
+\end{figure*}
+
+La validaci\'on manual de Ubuntu produjo cinco hallazgos corregidos. Primero, el formato abreviado de \texttt{who} se normaliz\'o antes de calcular la duraci\'on en vivo. Segundo, la lectura hist\'orica de disco vuelve a convertir los GB almacenados al contrato de bytes esperado por la vista. Tercero, el filtro rechaza formatos y fechas calendario inv\'alidas en lugar de ejecutar una b\'usqueda vac\'ia. Cuarto, \texttt{N.} numera la presentaci\'on sin sustituir el ID estable; la secuencia solo vuelve a uno si se elimina la \`ultima captura. Quinto, consultar, actualizar y eliminar muestran primero el historial, y la confirmaci\'on \texttt{SI} sigue siendo expl\'icita pero ignora may\'usculas y el acento. La Fig.~\ref{fig:crud} conserva la evidencia diagn\'ostica previa a las correcciones, incluido el encabezado \texttt{ID} y la aparici\'on del ID~2 despu\'es de eliminar; no prueba la interfaz corregida. Ese comportamiento se comprueba mediante pruebas de regresi\'on y la suite completa en WSL.
 
 Los criterios de aceptaci\'on se interpretaron seg\'un la naturaleza de cada dato. Se exige igualdad de claves y f\'ormulas para CPU y memoria, registros parseables para comandos, una direcci\'on primaria o ausencia expl\'icita en red, continuidad ante fallos parciales para la vista en vivo y atomicidad para el historial. No se exige igualdad exacta entre conteos tomados en instantes diferentes ni se generalizan los tiempos observados en una ejecuci\'on.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{figuras/evidencia_hilos_fork.png}
-\caption{Evidencia de la ejecuci\'on de seis hilos y un proceso hijo en WSL.}
+\includegraphics[width=\columnwidth]{figuras/evidencia_concurrencia_ubuntu.png}
+\caption{Evidencia en Ubuntu de seis hilos sin errores y un proceso hijo con salida cero.}
 \label{fig:concurrencia}
 \end{figure}
 
 \section{Conclusiones}
 El monitor integra los requisitos funcionales de observaci\'on de CPU, memoria, procesos, usuarios, disco y red en una aplicaci\'on de terminal para Linux. La separaci\'on MVC mantiene diferenciadas la lectura de recursos, la coordinaci\'on y la presentaci\'on; a su vez, el repositorio concentra la persistencia y las operaciones CRUD sobre SQLite.
 
-La demostraci\'on de seis hilos y un hijo ilustra una decisi\'on de orden relevante: los hilos terminan antes de iniciar \texttt{fork()}, y el padre recupera al hijo mediante una tuber\'ia y \texttt{waitpid()}. La transacci\'on para cada captura completa y las claves for\'aneas con cascada sostienen la consistencia de los datos almacenados. La verificaci\'on documentada respalda el comportamiento descrito, sin atribuirle propiedades de rendimiento.
+La demostraci\'on de seis hilos y un hijo ilustra una decisi\'on de orden relevante: los hilos terminan antes de iniciar \texttt{fork()}, y el padre recupera al hijo mediante una tuber\'ia y \texttt{waitpid()}. La transacci\'on para cada captura completa y las claves for\'aneas con cascada sostienen la consistencia de los datos almacenados. Los cinco incidentes corregidos muestran adem\'as la importancia de validar contratos entre recolecci\'on, persistencia y presentaci\'on. La verificaci\'on documentada respalda el comportamiento descrito, sin atribuirle propiedades de rendimiento.
 
 Como limitaciones, las lecturas dependen de las interfaces Linux disponibles y representan estados cambiantes del sistema. Trabajos futuros pueden estudiar la portabilidad de la capa de obtenci\'on o muestras de mayor duraci\'on, conservando la separaci\'on arquitect\'onica y sin afirmar que dichas extensiones formen parte de la versi\'on actual.
 
