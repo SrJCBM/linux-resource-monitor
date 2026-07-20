@@ -42,7 +42,9 @@ terminal legible. El numero mostrado indica cuantos registros se ven del total.
 
 En usuarios conectados, la columna de duracion se calcula al presentar la
 informacion a partir de `inicio_sesion`; no modifica la sesion ni almacena una
-duracion adicional.
+duracion adicional. La fecha que entrega `who` se normaliza a
+`YYYY-MM-DD HH:MM` antes de calcular la diferencia con la hora actual, tanto en
+la consulta en vivo como al recuperar una captura.
 
 ## Historial y CRUD
 
@@ -50,15 +52,39 @@ Seleccione `8` para abrir el historial de capturas.
 
 1. `Registrar captura`: solicita etiqueta y comentario opcionales, recolecta los
    seis modulos y guarda la captura completa en una transaccion SQLite.
-2. `Listar capturas`: muestra identificador, fecha y etiqueta. Puede filtrar por
-   una fecha con formato `YYYY-MM-DD`.
+2. `Listar capturas`: muestra orden, identificador, fecha y etiqueta. Puede
+   filtrar por una fecha real con formato exacto `YYYY-MM-DD`.
 3. `Consultar detalle`: solicita un identificador y presenta los valores
    almacenados de la captura.
 4. `Actualizar metadatos`: modifica solo etiqueta y comentario; las metricas no
    se editan.
-5. `Eliminar captura`: solicita el identificador y exige escribir exactamente
-   `SI` antes de eliminarla. La eliminacion borra tambien las metricas asociadas.
+5. `Eliminar captura`: solicita el identificador y exige escribir la palabra
+   explicita `SI` antes de eliminarla. La confirmacion no distingue mayusculas
+   y minusculas y admite `SI`, `si`, `Si` y `sí`. Cualquier otra
+   respuesta cancela la operacion. La eliminacion borra tambien las metricas
+   asociadas.
 6. `Volver`: regresa al menu principal.
+
+El encabezado del listado distingue ambos valores:
+
+```text
+N. | ID | FECHA Y HORA | ETIQUETA
+```
+
+`N.` es solo el orden consecutivo de presentacion. `ID` es la clave estable de
+SQLite que debe introducirse para consultar, actualizar o eliminar. Mientras
+quede al menos una captura, sus IDs no se renumeran al eliminar otra. Solo
+cuando el historial queda completamente vacio se reinicia la secuencia
+`AUTOINCREMENT`, por lo que la proxima captura vuelve a recibir el ID 1.
+
+El filtro de fecha valida el formato y el calendario. Entradas como
+`2026/07/18`, `18-07-2026` o `2026-02-30` producen un mensaje controlado y el
+menu permanece activo; no se interpretan como una busqueda sin resultados.
+
+En el detalle historico, las metricas de disco conservan el mismo contrato que
+la consulta en vivo: `espacio_total_bytes`, `espacio_usado_bytes` y
+`espacio_libre_bytes`. El repositorio reconstruye esos valores en bytes desde
+las columnas persistidas en GB antes de que la Vista los presente.
 
 Una captura no se guarda si falta un modulo obligatorio o si ocurre un error en
 la transaccion. La aplicacion informa el problema sin mostrar una traza tecnica.

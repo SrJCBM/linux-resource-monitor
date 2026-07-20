@@ -181,10 +181,33 @@ python3 main.py
 Use the numbered menu to:
 
 1. Register a complete monitoring capture.
-2. List captures and optionally filter by `YYYY-MM-DD`.
+2. List captures and optionally filter by an exact, real `YYYY-MM-DD` date.
 3. Consult a capture by identifier.
 4. Update only its label and comment.
-5. Delete it by typing `SI` when confirmation is requested.
+5. Delete it by typing the explicit word `SI` when confirmation is requested.
+
+The date filter rejects values such as `2026/07/18`, `18-07-2026` and
+`2026-02-30` with a controlled message, then keeps the menu active. In capture
+lists, `N.` is the consecutive display order and `ID` is the stable SQLite key
+used for consult, update and delete operations:
+
+```text
+N. | ID | FECHA Y HORA | ETIQUETA
+1  | 9  | 2026-07-18 10:00:00 | antes
+2  | 4  | 2026-07-18 11:00:00 | despues
+```
+
+Deleting a row never renumbers the IDs that remain. The `AUTOINCREMENT`
+sequence is reset so the next capture uses ID 1 only after the capture history
+becomes completely empty. Deletion confirmation is case-insensitive and also
+accepts the accented form of the same explicit word (`SI`, `si`, `Si` or
+`sí`); any other response cancels the operation.
+
+Live `who` timestamps are normalized to `YYYY-MM-DD HH:MM` before the View
+calculates connection duration from the current time. Historical disk details
+use the same byte-based contract as live disk data: the repository reconstructs
+`espacio_total_bytes`, `espacio_usado_bytes` and `espacio_libre_bytes` from the
+persisted GB values before the View formats them.
 
 The default database is created at `database/data/monitor.sqlite3`. It is a runtime file and must not be committed.
 
@@ -414,6 +437,13 @@ Project documentation is stored under `docs/`:
   - [English LaTeX source](docs/articulo/linux_resource_monitor_en.tex) and [final English PDF](docs/articulo/linux_resource_monitor_en.pdf).
 - Presentation material.
 - Demonstration evidence.
+
+The Ubuntu manual-validation source is the eight-page `Estado general.pdf`,
+created on 2026-07-18. Three article figures are planned from its positive
+terminal evidence: `evidencia_estado_general_ubuntu.png`,
+`evidencia_crud_ubuntu.png` and `evidencia_concurrencia_ubuntu.png`. Explanatory
+annotations that identify failures are diagnostic material and must not be
+presented as positive evidence of correct behavior.
 
 ## Academic deliverables
 

@@ -4,6 +4,27 @@ Los logs de esta carpeta se generan con resultados reales de Ubuntu WSL. No se
 deben editar para cambiar un resultado; si un caso falla, se conserva el codigo
 de salida y el error para poder corregirlo y repetir la ejecucion.
 
+## Procedencia de la validacion manual
+
+El archivo fuente `Estado general.pdf` fue creado el 2026-07-18 y contiene ocho
+paginas de capturas obtenidas durante una validacion manual en Ubuntu. Su alcance
+incluye CPU, memoria, procesos, disco, red, usuarios, CRUD, hilos y `fork()`.
+
+Se planifica extraer, sin modificar el contenido de la terminal, estas tres
+figuras para los articulos IEEE:
+
+- `docs/articulo/figuras/evidencia_estado_general_ubuntu.png`: CPU, memoria,
+  disco y red.
+- `docs/articulo/figuras/evidencia_crud_ubuntu.png`: registro, listado,
+  actualizacion y eliminacion.
+- `docs/articulo/figuras/evidencia_concurrencia_ubuntu.png`: seis hilos, cero
+  errores, PID padre e hijo y estado de salida cero.
+
+Estas imagenes estan planificadas y no se consideran disponibles hasta que sean
+extraidas y verificadas. Las anotaciones del PDF que describen formatos
+invalidos, cancelaciones inesperadas, IDs o valores incorrectos sirven para
+diagnosticar fallos; no se presentan como evidencia positiva de funcionamiento.
+
 ## Generar logs
 
 Desde Ubuntu WSL, en la raiz del repositorio:
