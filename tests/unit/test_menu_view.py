@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import unittest
 
-from view.menu_view import ejecutar_menu_crud
+from view.menu_view import _mostrar_listado, ejecutar_menu_crud
 
 
 class ControladorFalso:
@@ -15,7 +15,13 @@ class ControladorFalso:
         return 1
 
     def listar_capturas(self, fecha=None):
-        return []
+        return [
+            {
+                "id_captura": 7,
+                "fecha_hora": "2026-07-12 10:00:00",
+                "etiqueta": "prueba",
+            }
+        ]
 
     def consultar_captura(self, id_captura):
         return None
@@ -36,6 +42,11 @@ class ControladorConError(ControladorFalso):
 class ControladorConErrorAlListar(ControladorFalso):
     def listar_capturas(self, fecha=None):
         raise RuntimeError("base no disponible")
+
+
+class ControladorSinCapturas(ControladorFalso):
+    def listar_capturas(self, fecha=None):
+        return []
 
 
 class ControladorConDetalle(ControladorFalso):
@@ -79,6 +90,106 @@ class MenuViewTest(unittest.TestCase):
         ejecutar_menu_crud(controlador, lambda _: next(entradas), lambda _: None)
 
         self.assertEqual(controlador.eliminados, [7])
+
+    def test_eliminar_acepta_si_sin_importar_mayusculas_o_tilde(self) -> None:
+        for confirmacion in ("si", "Si", "sí", "SÍ"):
+            with self.subTest(confirmacion=confirmacion):
+                controlador = ControladorFalso()
+                entradas = iter(["5", "7", confirmacion, "0"])
+
+                ejecutar_menu_crud(
+                    controlador, lambda _: next(entradas), lambda _: None
+                )
+
+                self.assertEqual(controlador.eliminados, [7])
+
+    def test_listado_separa_numero_visual_del_identificador(self) -> None:
+        salidas: list[str] = []
+
+        _mostrar_listado(
+            [
+                {
+                    "id_captura": 9,
+                    "fecha_hora": "2026-07-18 10:00:00",
+                    "etiqueta": "antes",
+                },
+                {
+                    "id_captura": 4,
+                    "fecha_hora": "2026-07-18 11:00:00",
+                    "etiqueta": "despues",
+                },
+            ],
+            salidas.append,
+        )
+
+        self.assertEqual(
+            salidas,
+            [
+                "N. | ID | FECHA Y HORA | ETIQUETA",
+                "1 | 9 | 2026-07-18 10:00:00 | antes",
+                "2 | 4 | 2026-07-18 11:00:00 | despues",
+            ],
+        )
+
+    def test_operaciones_muestran_capturas_antes_de_pedir_id(self) -> None:
+        casos = {
+            "3": (ControladorConDetalle(), ["3", "7", "0"]),
+            "4": (ControladorFalso(), ["4", "7", "", "", "0"]),
+            "5": (ControladorFalso(), ["5", "7", "no", "0"]),
+        }
+        for opcion, (controlador, valores) in casos.items():
+            with self.subTest(opcion=opcion):
+                entradas = iter(valores)
+                eventos: list[tuple[str, str]] = []
+
+                ejecutar_menu_crud(
+                    controlador,
+                    lambda prompt: (
+                        eventos.append(("entrada", prompt)), next(entradas)
+                    )[1],
+                    lambda salida: eventos.append(("salida", salida)),
+                )
+
+                indice_listado = next(
+                    (
+                        indice
+                        for indice, evento in enumerate(eventos)
+                        if evento == (
+                            "salida", "N. | ID | FECHA Y HORA | ETIQUETA"
+                        )
+                    ),
+                    None,
+                )
+                indice_id = next(
+                    (
+                        indice
+                        for indice, evento in enumerate(eventos)
+                        if evento == ("entrada", "Identificador de captura: ")
+                    ),
+                    None,
+                )
+                self.assertIsNotNone(indice_listado)
+                self.assertIsNotNone(indice_id)
+                assert indice_listado is not None and indice_id is not None
+                self.assertLess(indice_listado, indice_id)
+
+    def test_operaciones_sin_capturas_no_solicitan_id(self) -> None:
+        for opcion in ("3", "4", "5"):
+            with self.subTest(opcion=opcion):
+                entradas = iter([opcion, "0", "0"])
+                solicitudes: list[str] = []
+                salidas: list[str] = []
+
+                ejecutar_menu_crud(
+                    ControladorSinCapturas(),
+                    lambda prompt: (
+                        solicitudes.append(prompt), next(entradas)
+                    )[1],
+                    salidas.append,
+                )
+
+                self.assertNotIn("Identificador de captura: ", solicitudes)
+                self.assertIn("No hay capturas almacenadas.", salidas)
 
     def test_error_al_crear_informa_y_permite_continuar(self) -> None:
         entradas = iter(["1", "", "", "0"])

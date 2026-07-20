@@ -23,12 +23,14 @@ class RepositorioFalso:
     def __init__(self) -> None:
         self.creada: tuple[dict[str, object], str | None, str | None, str | None] | None = None
         self.eliminados: list[int] = []
+        self.fechas_listadas: list[str | None] = []
 
     def crear_captura(self, datos, etiqueta=None, comentario=None, usuario_registro=None):
         self.creada = (datos, etiqueta, comentario, usuario_registro)
         return 7
 
     def listar_capturas(self, fecha=None):
+        self.fechas_listadas.append(fecha)
         return [{"id_captura": 7, "fecha_hora": "2026-07-11", "etiqueta": "demo"}]
 
     def obtener_captura(self, id_captura):
@@ -67,6 +69,22 @@ class CrudControllerTest(unittest.TestCase):
         self.assertEqual(self.controlador.consultar_captura(7), {"id_captura": 7})
         self.assertTrue(self.controlador.actualizar_captura(7, "nueva", "nota"))
         self.assertTrue(self.controlador.eliminar_captura(7))
+
+    def test_listar_rechaza_fechas_invalidas_antes_del_repositorio(self) -> None:
+        for fecha in ("2026/07/18", "18-07-2026", "2026-02-30"):
+            with self.subTest(fecha=fecha):
+                with self.assertRaisesRegex(ValueError, "YYYY-MM-DD"):
+                    self.controlador.listar_capturas(fecha)
+
+        self.assertEqual(self.repositorio.fechas_listadas, [])
+
+    def test_listar_acepta_fecha_iso_real_y_filtro_ausente(self) -> None:
+        self.controlador.listar_capturas("2026-07-18")
+        self.controlador.listar_capturas(None)
+
+        self.assertEqual(
+            self.repositorio.fechas_listadas, ["2026-07-18", None]
+        )
 
     def test_error_sql_se_convierte_en_error_controlado(self) -> None:
         class RepositorioConError(RepositorioFalso):

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import unicodedata
 from collections.abc import Callable
 from typing import Any
 
@@ -142,42 +143,56 @@ def ejecutar_menu_crud(
             except (RuntimeError, ValueError) as exc:
                 output_fn(f"ERROR: No se pudo listar las capturas: {exc}")
         elif opcion == "3":
-            id_captura = _leer_id(input_fn, output_fn)
-            if id_captura is not None:
-                try:
+            try:
+                if _mostrar_capturas_disponibles(controller, output_fn):
+                    id_captura = _leer_id(input_fn, output_fn)
+                    if id_captura is None:
+                        continue
                     captura = controller.consultar_captura(id_captura)
                     if captura is None:
                         output_fn("ADVERTENCIA: captura no encontrada.")
                     else:
                         _mostrar_detalle(captura, output_fn)
-                except (RuntimeError, ValueError) as exc:
-                    output_fn(f"ERROR: No se pudo consultar la captura: {exc}")
+            except (RuntimeError, ValueError) as exc:
+                output_fn(f"ERROR: No se pudo consultar la captura: {exc}")
         elif opcion == "4":
-            id_captura = _leer_id(input_fn, output_fn)
-            if id_captura is not None:
-                etiqueta = input_fn("Nueva etiqueta opcional: ").strip() or None
-                comentario = input_fn("Nuevo comentario opcional: ").strip() or None
-                try:
+            try:
+                if _mostrar_capturas_disponibles(controller, output_fn):
+                    id_captura = _leer_id(input_fn, output_fn)
+                    if id_captura is None:
+                        continue
+                    etiqueta = input_fn("Nueva etiqueta opcional: ").strip() or None
+                    comentario = input_fn("Nuevo comentario opcional: ").strip() or None
                     if controller.actualizar_captura(id_captura, etiqueta, comentario):
                         output_fn("EXITO: metadatos actualizados.")
                     else:
                         output_fn("ADVERTENCIA: captura no encontrada.")
-                except (RuntimeError, ValueError) as exc:
-                    output_fn(f"ERROR: No se pudo actualizar la captura: {exc}")
+            except (RuntimeError, ValueError) as exc:
+                output_fn(f"ERROR: No se pudo actualizar la captura: {exc}")
         elif opcion == "5":
-            id_captura = _leer_id(input_fn, output_fn)
-            if id_captura is not None:
-                confirmacion = input_fn("Escriba SI para confirmar la eliminacion: ").strip()
-                if confirmacion != "SI":
-                    output_fn("Eliminacion cancelada.")
-                else:
-                    try:
-                        if controller.eliminar_captura(id_captura):
-                            output_fn("EXITO: captura eliminada.")
-                        else:
-                            output_fn("ADVERTENCIA: captura no encontrada.")
-                    except (RuntimeError, ValueError) as exc:
-                        output_fn(f"ERROR: No se pudo eliminar la captura: {exc}")
+            try:
+                if _mostrar_capturas_disponibles(controller, output_fn):
+                    id_captura = _leer_id(input_fn, output_fn)
+                    if id_captura is None:
+                        continue
+                    confirmacion = input_fn(
+                        "Escriba SI para confirmar la eliminacion: "
+                    ).strip()
+                    confirmacion = "".join(
+                        caracter
+                        for caracter in unicodedata.normalize(
+                            "NFD", confirmacion.casefold()
+                        )
+                        if not unicodedata.combining(caracter)
+                    )
+                    if confirmacion != "si":
+                        output_fn("Eliminacion cancelada.")
+                    elif controller.eliminar_captura(id_captura):
+                        output_fn("EXITO: captura eliminada.")
+                    else:
+                        output_fn("ADVERTENCIA: captura no encontrada.")
+            except (RuntimeError, ValueError) as exc:
+                output_fn(f"ERROR: No se pudo eliminar la captura: {exc}")
         else:
             output_fn("ERROR: Opcion invalida.")
 
@@ -199,12 +214,21 @@ def _mostrar_listado(capturas: list[dict[str, object]], output_fn: OutputFn) -> 
     if not capturas:
         output_fn("No hay capturas almacenadas.")
         return
-    output_fn("ID | FECHA Y HORA | ETIQUETA")
-    for captura in capturas:
+    output_fn("N. | ID | FECHA Y HORA | ETIQUETA")
+    for numero, captura in enumerate(capturas, start=1):
         output_fn(
-            f"{captura['id_captura']} | {captura['fecha_hora']} | "
+            f"{numero} | {captura['id_captura']} | {captura['fecha_hora']} | "
             f"{captura.get('etiqueta') or '-'}"
         )
+
+
+def _mostrar_capturas_disponibles(controller: Any, output_fn: OutputFn) -> bool:
+    capturas = controller.listar_capturas()
+    if not capturas:
+        output_fn("No hay capturas almacenadas.")
+        return False
+    _mostrar_listado(capturas, output_fn)
+    return True
 
 
 def _mostrar_detalle(captura: dict[str, object], output_fn: OutputFn) -> None:

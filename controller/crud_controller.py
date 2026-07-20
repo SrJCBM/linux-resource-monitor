@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import re
 import sqlite3
 from collections.abc import Callable
+from datetime import datetime
 from typing import Any
 
 from controller.concurrencia_controller import recolectar_con_hilos
@@ -43,6 +45,15 @@ class CrudController:
         )
 
     def listar_capturas(self, fecha: str | None = None) -> list[dict[str, object]]:
+        if fecha is not None:
+            fecha = fecha.strip()
+            mensaje = "La fecha debe usar el formato YYYY-MM-DD y ser valida."
+            if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", fecha):
+                raise ValueError(mensaje)
+            try:
+                datetime.strptime(fecha, "%Y-%m-%d")
+            except ValueError as error:
+                raise ValueError(mensaje) from error
         return self._ejecutar_repositorio(lambda: self.repositorio.listar_capturas(fecha))
 
     def consultar_captura(self, id_captura: int) -> dict[str, object] | None:

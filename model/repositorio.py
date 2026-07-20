@@ -133,6 +133,15 @@ class RepositorioCapturas:
                 cursor = conexion.execute(
                     "DELETE FROM capturas WHERE id_captura = ?", (id_captura,)
                 )
+                if cursor.rowcount > 0:
+                    hay_capturas = conexion.execute(
+                        "SELECT 1 FROM capturas LIMIT 1"
+                    ).fetchone()
+                    if hay_capturas is None:
+                        conexion.execute(
+                            "DELETE FROM sqlite_sequence WHERE name = ?",
+                            ("capturas",),
+                        )
             return cursor.rowcount > 0
         finally:
             conexion.close()

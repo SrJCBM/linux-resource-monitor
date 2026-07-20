@@ -138,6 +138,25 @@ class RepositorioCapturasTest(unittest.TestCase):
         self.assertEqual(len(self.repositorio.listar_capturas("2026-07-11")), 1)
         self.assertEqual(self.repositorio.listar_capturas("2026-07-10"), [])
 
+    def test_reinicia_secuencia_cuando_se_elimina_la_ultima_captura(self) -> None:
+        primera = self.repositorio.crear_captura(_captura_completa())
+
+        self.assertTrue(self.repositorio.eliminar_captura(primera))
+        siguiente = self.repositorio.crear_captura(_captura_completa())
+
+        self.assertEqual(primera, 1)
+        self.assertEqual(siguiente, 1)
+
+    def test_conserva_ids_y_secuencia_mientras_queden_capturas(self) -> None:
+        primera = self.repositorio.crear_captura(_captura_completa())
+        segunda = self.repositorio.crear_captura(_captura_completa())
+
+        self.assertTrue(self.repositorio.eliminar_captura(primera))
+        tercera = self.repositorio.crear_captura(_captura_completa())
+
+        self.assertEqual((primera, segunda, tercera), (1, 2, 3))
+        self.assertIsNotNone(self.repositorio.obtener_captura(segunda))
+
     def test_error_en_metrica_revierte_toda_la_captura(self) -> None:
         datos = _captura_completa()
         datos["cpu"] = {"modelo": "incompleta"}
