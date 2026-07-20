@@ -3,28 +3,14 @@
 from __future__ import annotations
 
 import sqlite3
-from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
 from database.conexion import abrir_conexion, inicializar_base_datos
+from model.usuarios_model import normalizar_inicio_sesion
 
 
 BYTES_POR_GB = 1024**3
-MESES_WHO = {
-    "Jan": 1,
-    "Feb": 2,
-    "Mar": 3,
-    "Apr": 4,
-    "May": 5,
-    "Jun": 6,
-    "Jul": 7,
-    "Aug": 8,
-    "Sep": 9,
-    "Oct": 10,
-    "Nov": 11,
-    "Dec": 12,
-}
 
 
 class RepositorioCapturas:
@@ -271,7 +257,7 @@ class RepositorioCapturas:
                     id_captura,
                     usuario["nombre_usuario"],
                     usuario.get("terminal"),
-                    _normalizar_inicio_sesion(usuario.get("inicio_sesion")),
+                    normalizar_inicio_sesion(usuario.get("inicio_sesion")),
                 )
                 for usuario in usuarios
             ],
@@ -311,32 +297,3 @@ def _lista(datos: dict[str, object], clave: str) -> list[dict[str, Any]]:
     if not isinstance(valor, list) or not all(isinstance(item, dict) for item in valor):
         raise TypeError(f"{clave} debe ser una lista de diccionarios.")
     return valor
-
-
-def _normalizar_inicio_sesion(valor: object) -> str | None:
-    if valor is None:
-        return None
-    if not isinstance(valor, str):
-        raise TypeError("inicio_sesion debe ser texto o None.")
-
-    try:
-        return datetime.strptime(valor, "%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
-    except ValueError:
-        pass
-
-    partes = valor.split()
-    if len(partes) != 3 or partes[0] not in MESES_WHO:
-        raise ValueError(f"Formato de inicio_sesion no reconocido: {valor}")
-
-    ahora = datetime.now()
-    hora, minuto = (int(parte) for parte in partes[2].split(":", 1))
-    candidato = datetime(
-        ahora.year,
-        MESES_WHO[partes[0]],
-        int(partes[1]),
-        hora,
-        minuto,
-    )
-    if candidato > ahora + timedelta(days=1):
-        candidato = candidato.replace(year=ahora.year - 1)
-    return candidato.strftime("%Y-%m-%d %H:%M")

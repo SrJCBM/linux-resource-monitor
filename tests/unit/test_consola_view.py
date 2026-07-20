@@ -150,6 +150,20 @@ class ConsolaViewTest(unittest.TestCase):
 
         self.assertIn("2 h 15 min", result)
 
+    def test_format_usuarios_info_calculates_normalized_live_duration(self):
+        result = consola_view.format_usuarios_info(
+            [
+                {
+                    "nombre_usuario": "ariel",
+                    "terminal": "seat0",
+                    "inicio_sesion": "2026-07-18 15:54",
+                }
+            ],
+            ahora=datetime(2026, 7, 18, 17, 11),
+        )
+
+        self.assertIn("1 h 17 min", result)
+
     def test_format_session_duration_normalizes_z_time_with_local_timezone(self):
         result = consola_view._format_session_duration(
             "2026-07-11T08:30:00Z",
