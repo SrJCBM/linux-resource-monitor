@@ -10,20 +10,22 @@ El archivo fuente `Estado general.pdf` fue creado el 2026-07-18 y contiene ocho
 paginas de capturas obtenidas durante una validacion manual en Ubuntu. Su alcance
 incluye CPU, memoria, procesos, disco, red, usuarios, CRUD, hilos y `fork()`.
 
-Se planifica extraer, sin modificar el contenido de la terminal, estas tres
-figuras para los articulos IEEE:
+Se extrajeron y verificaron, sin modificar el contenido de la terminal, estas
+tres figuras para los articulos IEEE:
 
 - `docs/articulo/figuras/evidencia_estado_general_ubuntu.png`: CPU, memoria,
   disco y red.
-- `docs/articulo/figuras/evidencia_crud_ubuntu.png`: registro, listado,
-  actualizacion y eliminacion.
+- `docs/articulo/figuras/evidencia_crud_ubuntu.png`: secuencia diagnostica de
+  registro, listado, actualizacion y eliminacion anterior a las correcciones.
 - `docs/articulo/figuras/evidencia_concurrencia_ubuntu.png`: seis hilos, cero
   errores, PID padre e hijo y estado de salida cero.
 
-Estas imagenes estan planificadas y no se consideran disponibles hasta que sean
-extraidas y verificadas. Las anotaciones del PDF que describen formatos
-invalidos, cancelaciones inesperadas, IDs o valores incorrectos sirven para
-diagnosticar fallos; no se presentan como evidencia positiva de funcionamiento.
+Las figuras de estado general y concurrencia son evidencia positiva de ejecucion
+en Ubuntu. La figura CRUD conserva el encabezado y el comportamiento de IDs
+observados antes de corregirlos, por lo que los articulos la identifican como
+evidencia diagnostica y no como representacion de la interfaz final. Las
+anotaciones del PDF que describen formatos invalidos, cancelaciones inesperadas,
+IDs o valores incorrectos no se presentan como evidencia positiva.
 
 ## Generar logs
 

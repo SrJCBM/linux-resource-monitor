@@ -439,11 +439,13 @@ Project documentation is stored under `docs/`:
 - Demonstration evidence.
 
 The Ubuntu manual-validation source is the eight-page `Estado general.pdf`,
-created on 2026-07-18. Three article figures are planned from its positive
-terminal evidence: `evidencia_estado_general_ubuntu.png`,
-`evidencia_crud_ubuntu.png` and `evidencia_concurrencia_ubuntu.png`. Explanatory
-annotations that identify failures are diagnostic material and must not be
-presented as positive evidence of correct behavior.
+created on 2026-07-18. Three verified article figures were extracted without
+altering terminal output: `evidencia_estado_general_ubuntu.png`,
+`evidencia_crud_ubuntu.png` and `evidencia_concurrencia_ubuntu.png`. The general
+state and concurrency figures are positive execution evidence. The CRUD figure
+records the pre-correction validation sequence and is labeled as diagnostic
+evidence in the articles; its old header and ID behavior do not represent the
+corrected interface. Explanatory failure annotations from the PDF are omitted.
 
 ## Academic deliverables
 
