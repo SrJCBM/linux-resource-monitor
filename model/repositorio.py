@@ -82,12 +82,18 @@ class RepositorioCapturas:
             memoria = self._obtener_uno(conexion, "memoria_metricas", id_captura)
             if memoria is not None:
                 memoria.pop("id_captura", None)
+            discos = [
+                _reconstruir_disco(disco)
+                for disco in self._obtener_varios(
+                    conexion, "disco_metricas", id_captura
+                )
+            ]
 
             captura.update(
                 {
                     "cpu": cpu,
                     "memoria": memoria,
-                    "discos": self._obtener_varios(conexion, "disco_metricas", id_captura),
+                    "discos": discos,
                     "procesos": self._obtener_varios(
                         conexion, "procesos_metricas", id_captura
                     ),
@@ -297,3 +303,19 @@ def _lista(datos: dict[str, object], clave: str) -> list[dict[str, Any]]:
     if not isinstance(valor, list) or not all(isinstance(item, dict) for item in valor):
         raise TypeError(f"{clave} debe ser una lista de diccionarios.")
     return valor
+
+
+def _reconstruir_disco(fila: dict[str, Any]) -> dict[str, Any]:
+    """Restaura en bytes el contrato de disco expuesto por los modelos."""
+    resultado = dict(fila)
+    resultado["espacio_total_bytes"] = round(
+        float(resultado.pop("espacio_total_gb")) * BYTES_POR_GB
+    )
+    resultado["espacio_usado_bytes"] = round(
+        float(resultado.pop("espacio_usado_gb")) * BYTES_POR_GB
+    )
+    resultado["espacio_libre_bytes"] = round(
+        float(resultado.pop("espacio_libre_gb")) * BYTES_POR_GB
+    )
+    resultado.pop("id_disco_metrica", None)
+    return resultado

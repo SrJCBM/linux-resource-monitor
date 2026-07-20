@@ -47,7 +47,16 @@ class ControladorConDetalle(ControladorFalso):
             "comentario": "detalle",
             "cpu": {"modelo": "CPU prueba", "porcentaje_uso": 12.5},
             "memoria": {"mem_total_mb": 100.0, "mem_usada_mb": 25.0},
-            "discos": [],
+            "discos": [
+                {
+                    "sistema_archivos": "/dev/sda1",
+                    "punto_montaje": "/",
+                    "espacio_total_bytes": 1073741824,
+                    "espacio_usado_bytes": 536870912,
+                    "espacio_libre_bytes": 536870912,
+                    "porcentaje_uso": 50.0,
+                }
+            ],
             "red": [],
             "procesos": [],
             "usuarios": [],
@@ -102,6 +111,8 @@ class MenuViewTest(unittest.TestCase):
         detalle = "\n".join(salidas)
         self.assertIn("=== CPU ===", detalle)
         self.assertIn("=== MEMORIA ===", detalle)
+        self.assertIn("1.00 GB", detalle)
+        self.assertIn("0.50 GB", detalle)
         self.assertNotIn("'porcentaje_uso'", detalle)
 
 

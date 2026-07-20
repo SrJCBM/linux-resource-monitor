@@ -91,7 +91,11 @@ class RepositorioCapturasTest(unittest.TestCase):
         assert captura is not None
         self.assertEqual(captura["etiqueta"], "inicio")
         self.assertEqual(captura["cpu"]["modelo"], "CPU de prueba")
-        self.assertEqual(captura["discos"][0]["espacio_total_gb"], 1.0)
+        disco = captura["discos"][0]
+        self.assertEqual(disco["espacio_total_bytes"], 1073741824)
+        self.assertEqual(disco["espacio_usado_bytes"], 536870912)
+        self.assertEqual(disco["espacio_libre_bytes"], 536870912)
+        self.assertNotIn("espacio_total_gb", disco)
         self.assertEqual(captura["red"][0]["paquetes_enviados"], 4)
         self.assertEqual(captura["usuarios"][0]["inicio_sesion"], "2026-07-11 08:30")
 
