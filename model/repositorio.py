@@ -27,10 +27,11 @@ class RepositorioCapturas:
         comentario: str | None = None,
         usuario_registro: str | None = None,
     ) -> int:
-        """Guarda una captura y todas sus metricas de forma atomica."""
+        """Guarda una captura completa y repara la secuencia si estaba vacia."""
         conexion = abrir_conexion(self.ruta_bd)
         try:
             with conexion:
+                _reiniciar_secuencia_si_historial_vacio(conexion)
                 cursor = conexion.execute(
                     """
                     INSERT INTO capturas (etiqueta, comentario, usuario_registro)
@@ -50,13 +51,13 @@ class RepositorioCapturas:
             conexion.close()
 
     def listar_capturas(self, fecha: str | None = None) -> list[dict[str, Any]]:
-        """Lista metadatos de capturas, opcionalmente filtrados por fecha ISO."""
+        """Lista capturas de la mas antigua a la mas reciente."""
         consulta = "SELECT * FROM capturas"
         parametros: tuple[object, ...] = ()
         if fecha:
             consulta += " WHERE fecha_hora LIKE ?"
             parametros = (f"{fecha}%",)
-        consulta += " ORDER BY fecha_hora DESC, id_captura DESC"
+        consulta += " ORDER BY fecha_hora ASC, id_captura ASC"
 
         conexion = abrir_conexion(self.ruta_bd)
         try:
@@ -134,14 +135,7 @@ class RepositorioCapturas:
                     "DELETE FROM capturas WHERE id_captura = ?", (id_captura,)
                 )
                 if cursor.rowcount > 0:
-                    hay_capturas = conexion.execute(
-                        "SELECT 1 FROM capturas LIMIT 1"
-                    ).fetchone()
-                    if hay_capturas is None:
-                        conexion.execute(
-                            "DELETE FROM sqlite_sequence WHERE name = ?",
-                            ("capturas",),
-                        )
+                    _reiniciar_secuencia_si_historial_vacio(conexion)
             return cursor.rowcount > 0
         finally:
             conexion.close()
@@ -328,3 +322,15 @@ def _reconstruir_disco(fila: dict[str, Any]) -> dict[str, Any]:
     )
     resultado.pop("id_disco_metrica", None)
     return resultado
+
+
+def _reiniciar_secuencia_si_historial_vacio(
+    conexion: sqlite3.Connection,
+) -> None:
+    """Reinicia la secuencia de capturas solo cuando no existe ninguna fila."""
+    hay_capturas = conexion.execute("SELECT 1 FROM capturas LIMIT 1").fetchone()
+    if hay_capturas is None:
+        conexion.execute(
+            "DELETE FROM sqlite_sequence WHERE name = ?",
+            ("capturas",),
+        )

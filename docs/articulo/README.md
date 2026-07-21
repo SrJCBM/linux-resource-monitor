@@ -30,8 +30,8 @@ para casos limite produjo estos resultados exactos:
 
 | Entorno | Resultado | Tiempo |
 |---|---|---:|
-| Windows | 69 pruebas correctas, 2 omitidas por ser exclusivas de Linux | 0.261 s |
-| Ubuntu WSL | 69 pruebas correctas, 0 fallos y 0 omisiones | 0.870 s |
+| Windows | 71 pruebas correctas, 2 omitidas por ser exclusivas de Linux | 0.369 s |
+| Ubuntu WSL | 71 pruebas correctas, 0 fallos y 0 omisiones | 0.751 s |
 
 Las omisiones de Windows corresponden solamente a integraciones que requieren
 Linux. La suite completa de Ubuntu es la evidencia automatizada de las cinco

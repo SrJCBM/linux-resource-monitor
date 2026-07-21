@@ -138,10 +138,49 @@ class RepositorioCapturasTest(unittest.TestCase):
         self.assertEqual(len(self.repositorio.listar_capturas("2026-07-11")), 1)
         self.assertEqual(self.repositorio.listar_capturas("2026-07-10"), [])
 
+    def test_listar_capturas_en_orden_cronologico_ascendente(self) -> None:
+        primera = self.repositorio.crear_captura(_captura_completa())
+        segunda = self.repositorio.crear_captura(_captura_completa())
+        tercera = self.repositorio.crear_captura(_captura_completa())
+        conexion = abrir_conexion(self.ruta)
+        try:
+            conexion.executemany(
+                "UPDATE capturas SET fecha_hora = ? WHERE id_captura = ?",
+                [
+                    ("2026-07-20 12:00:00", primera),
+                    ("2026-07-20 10:00:00", segunda),
+                    ("2026-07-20 11:00:00", tercera),
+                ],
+            )
+            conexion.commit()
+        finally:
+            conexion.close()
+
+        listado = self.repositorio.listar_capturas()
+
+        self.assertEqual(
+            [captura["id_captura"] for captura in listado],
+            [segunda, tercera, primera],
+        )
+
     def test_reinicia_secuencia_cuando_se_elimina_la_ultima_captura(self) -> None:
         primera = self.repositorio.crear_captura(_captura_completa())
 
         self.assertTrue(self.repositorio.eliminar_captura(primera))
+        siguiente = self.repositorio.crear_captura(_captura_completa())
+
+        self.assertEqual(primera, 1)
+        self.assertEqual(siguiente, 1)
+
+    def test_repara_secuencia_residual_si_el_historial_ya_esta_vacio(self) -> None:
+        primera = self.repositorio.crear_captura(_captura_completa())
+        conexion = abrir_conexion(self.ruta)
+        try:
+            conexion.execute("DELETE FROM capturas")
+            conexion.commit()
+        finally:
+            conexion.close()
+
         siguiente = self.repositorio.crear_captura(_captura_completa())
 
         self.assertEqual(primera, 1)

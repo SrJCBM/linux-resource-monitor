@@ -52,8 +52,9 @@ Seleccione `8` para abrir el historial de capturas.
 
 1. `Registrar captura`: solicita etiqueta y comentario opcionales, recolecta los
    seis modulos y guarda la captura completa en una transaccion SQLite.
-2. `Listar capturas`: muestra orden, identificador, fecha y etiqueta. Puede
-   filtrar por una fecha real con formato exacto `YYYY-MM-DD`.
+2. `Listar capturas`: muestra orden, identificador, fecha y etiqueta en orden
+   cronologico ascendente, desde la captura mas antigua hasta la mas reciente.
+   Puede filtrar por una fecha real con formato exacto `YYYY-MM-DD`.
 3. `Consultar detalle`: solicita un identificador y presenta los valores
    almacenados de la captura.
 4. `Actualizar metadatos`: modifica solo etiqueta y comentario; las metricas no
@@ -73,9 +74,10 @@ N. | ID | FECHA Y HORA | ETIQUETA
 
 `N.` es solo el orden consecutivo de presentacion. `ID` es la clave estable de
 SQLite que debe introducirse para consultar, actualizar o eliminar. Mientras
-quede al menos una captura, sus IDs no se renumeran al eliminar otra. Solo
-cuando el historial queda completamente vacio se reinicia la secuencia
-`AUTOINCREMENT`, por lo que la proxima captura vuelve a recibir el ID 1.
+quede al menos una captura, sus IDs no se renumeran al eliminar otra. Cuando el
+historial esta completamente vacio, el repositorio limpia cualquier secuencia
+`AUTOINCREMENT` residual antes de insertar; por ello, la proxima captura vuelve
+a recibir el ID 1 incluso si la base vacia provenia de una ejecucion anterior.
 
 El filtro de fecha valida el formato y el calendario. Entradas como
 `2026/07/18`, `18-07-2026` o `2026-02-30` producen un mensaje controlado y el

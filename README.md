@@ -189,7 +189,8 @@ Use the numbered menu to:
 The date filter rejects values such as `2026/07/18`, `18-07-2026` and
 `2026-02-30` with a controlled message, then keeps the menu active. In capture
 lists, `N.` is the consecutive display order and `ID` is the stable SQLite key
-used for consult, update and delete operations:
+used for consult, update and delete operations. Captures are ordered
+chronologically from oldest to newest:
 
 ```text
 N. | ID | FECHA Y HORA | ETIQUETA
@@ -197,9 +198,10 @@ N. | ID | FECHA Y HORA | ETIQUETA
 2  | 4  | 2026-07-18 11:00:00 | despues
 ```
 
-Deleting a row never renumbers the IDs that remain. The `AUTOINCREMENT`
-sequence is reset so the next capture uses ID 1 only after the capture history
-becomes completely empty. Deletion confirmation is case-insensitive and also
+Deleting a row never renumbers the IDs that remain. When the capture history is
+completely empty, the repository clears any residual `AUTOINCREMENT` sequence
+before insertion so the next capture uses ID 1. Deletion confirmation is
+case-insensitive and also
 accepts the accented form of the same explicit word (`SI`, `si`, `Si` or
 `sí`); any other response cancels the operation.
 

@@ -74,12 +74,16 @@ El listado mostrara:
 
 N. se recalcula desde 1 en cada listado y sirve solo como posicion visual. ID
 sigue siendo la clave que se introduce para consultar, actualizar o eliminar.
+Las capturas se muestran en orden cronologico ascendente, de la mas antigua a
+la mas reciente; si coinciden en fecha y hora, el ID resuelve el orden.
 Antes de esas tres operaciones, la Vista mostrara el listado actual; si esta
 vacio, no solicitara un identificador.
 
 No se renumeraran capturas existentes. Cuando una eliminacion deje la tabla
 capturas completamente vacia, el repositorio reiniciara solo la secuencia de
 esa tabla dentro de la misma transaccion. La siguiente captura volvera a ID 1.
+Antes de insertar en un historial ya vacio, tambien se eliminara una secuencia
+residual que pudiera proceder de una version o eliminacion anterior.
 No se modificaran secuencias mientras permanezca al menos una captura.
 
 ### Confirmacion de borrado
