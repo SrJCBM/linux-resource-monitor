@@ -139,7 +139,14 @@ def ejecutar_menu_crud(
         elif opcion == "2":
             fecha = input_fn("Fecha YYYY-MM-DD opcional: ").strip() or None
             try:
-                _mostrar_listado(controller.listar_capturas(fecha), output_fn)
+                mensaje_vacio = (
+                    "No hay capturas para la fecha indicada."
+                    if fecha
+                    else "No hay capturas almacenadas."
+                )
+                _mostrar_listado(
+                    controller.listar_capturas(fecha), output_fn, mensaje_vacio
+                )
             except (RuntimeError, ValueError) as exc:
                 output_fn(f"ERROR: No se pudo listar las capturas: {exc}")
         elif opcion == "3":
@@ -210,10 +217,14 @@ def _leer_id(input_fn: InputFn, output_fn: OutputFn) -> int | None:
     return id_captura
 
 
-def _mostrar_listado(capturas: list[dict[str, object]], output_fn: OutputFn) -> None:
+def _mostrar_listado(
+    capturas: list[dict[str, object]],
+    output_fn: OutputFn,
+    mensaje_vacio: str = "No hay capturas almacenadas.",
+) -> None:
     """Muestra un orden visual consecutivo separado del ID SQLite estable."""
     if not capturas:
-        output_fn("No hay capturas almacenadas.")
+        output_fn(mensaje_vacio)
         return
     output_fn("N. | ID | FECHA Y HORA | ETIQUETA")
     for numero, captura in enumerate(capturas, start=1):

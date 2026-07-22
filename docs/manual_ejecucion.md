@@ -82,6 +82,9 @@ a recibir el ID 1 incluso si la base vacia provenia de una ejecucion anterior.
 El filtro de fecha valida el formato y el calendario. Entradas como
 `2026/07/18`, `18-07-2026` o `2026-02-30` producen un mensaje controlado y el
 menu permanece activo; no se interpretan como una busqueda sin resultados.
+Si una fecha valida no tiene coincidencias, la Vista indica `No hay capturas
+para la fecha indicada.` sin afirmar incorrectamente que el historial completo
+esta vacio.
 
 En el detalle historico, las metricas de disco conservan el mismo contrato que
 la consulta en vivo: `espacio_total_bytes`, `espacio_usado_bytes` y

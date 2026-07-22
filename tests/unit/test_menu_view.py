@@ -173,7 +173,7 @@ class MenuViewTest(unittest.TestCase):
                 assert indice_listado is not None and indice_id is not None
                 self.assertLess(indice_listado, indice_id)
 
-    def test_operaciones_sin_capturas_no_solicitan_id(self) -> None:
+    def test_mensajes_sin_capturas_distinguen_historial_y_filtro(self) -> None:
         for opcion in ("3", "4", "5"):
             with self.subTest(opcion=opcion):
                 entradas = iter([opcion, "0", "0"])
@@ -190,6 +190,16 @@ class MenuViewTest(unittest.TestCase):
 
                 self.assertNotIn("Identificador de captura: ", solicitudes)
                 self.assertIn("No hay capturas almacenadas.", salidas)
+
+        entradas = iter(["2", "2026-07-30", "0"])
+        salidas_filtro: list[str] = []
+
+        ejecutar_menu_crud(
+            ControladorSinCapturas(), lambda _: next(entradas), salidas_filtro.append
+        )
+
+        self.assertIn("No hay capturas para la fecha indicada.", salidas_filtro)
+        self.assertNotIn("No hay capturas almacenadas.", salidas_filtro)
 
     def test_error_al_crear_informa_y_permite_continuar(self) -> None:
         entradas = iter(["1", "", "", "0"])

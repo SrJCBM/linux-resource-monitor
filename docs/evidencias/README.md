@@ -46,6 +46,32 @@ estandar y salida de error.
 | `03_crud_sqlite.txt` | RF-09 a RF-12, RNF-03, RNF-13, RNF-14 | Identificador creado, actualizacion, eliminacion y cero capturas restantes. |
 | `04_hilos_y_fork.txt` | RF-07, RF-08, RNF-07 | Evidencias de hilos, PID padre/hijo, pipe y salida correcta. |
 
+## Capturas manuales de Ubuntu
+
+Las opciones 1 a 9 del menu principal se validaron manualmente el 2026-07-22
+en un clon ejecutado directamente en Ubuntu. La opcion de estado general ocupa
+tres imagenes para conservar la legibilidad de todos los modulos.
+
+| Captura | Opcion y contenido |
+|---|---|
+| `05_opcion_1_estado_general_cpu_memoria.png` | Opcion 1: fecha de actualizacion, CPU y memoria. |
+| `06_opcion_1_estado_general_disco_red.png` | Opcion 1: disco y red. |
+| `07_opcion_1_estado_general_procesos_usuarios.png` | Opcion 1: procesos y usuarios conectados. |
+| `08_opcion_2_cpu.png` | Opcion 2: CPU. |
+| `09_opcion_3_memoria_swap.png` | Opcion 3: memoria y swap. |
+| `10_opcion_4_procesos.png` | Opcion 4: procesos. |
+| `11_opcion_5_disco.png` | Opcion 5: sistemas de archivos montados. |
+| `12_opcion_6_red.png` | Opcion 6: interfaces y contadores de red. |
+| `13_opcion_7_usuarios_conectados.png` | Opcion 7: sesiones y duracion de conexion. |
+| `14_opcion_8_crud_registro_capturas.png` | Opcion 8: registro consecutivo de las capturas 1 y 2. |
+| `15_opcion_8_crud_listado_actualizacion.png` | Opcion 8: orden ascendente y actualizacion de metadatos. |
+| `16_opcion_8_crud_eliminacion_filtro.png` | Opcion 8: eliminacion confirmada y filtro valido sin coincidencias. |
+| `17_opcion_9_concurrencia_hilos_fork.png` | Opcion 9: seis hilos, PID padre/hijo y salida cero. |
+
+La captura `16_opcion_8_crud_eliminacion_filtro.png` se obtuvo antes de ajustar
+el texto del resultado filtrado. Evidencia la eliminacion y una consulta sin
+coincidencias, pero no se usa para demostrar la redaccion final del mensaje.
+
 ## Capturas de Windows Terminal
 
 Las capturas literales se guardan en `capturas/`. Deben mostrar solo la ventana
