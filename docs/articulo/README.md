@@ -16,12 +16,11 @@ formato IEEE de conferencia.
 | referencias.bib | Bibliografia BibTeX compartida. |
 | IEEEtran.cls | Clase IEEE local para compilacion autocontenida. |
 | figuras/arquitectura_actual.png | Arquitectura MVC y flujo del sistema. |
-| figuras/evidencia_estado_general_ubuntu.png | Evidencia positiva del estado general en Ubuntu. |
-| figuras/evidencia_crud_ubuntu.png | Evidencia diagnostica CRUD previa a las correcciones. |
-| figuras/evidencia_concurrencia_ubuntu.png | Evidencia positiva de hilos y proceso hijo en Ubuntu. |
+| ../evidencias/capturas/ | Capturas finales e indice completo de las opciones del programa. |
 
-`figuras/evidencia_hilos_fork.png` se conserva como imagen historica, pero las
-versiones actuales de los articulos no la referencian.
+Las figuras antiguas de ejecucion se conservan en `figuras/` como material
+historico. Las versiones actuales solo referencian la arquitectura y seis
+capturas finales procedentes de `../evidencias/capturas/`.
 
 ## Evidencia funcional final
 
@@ -30,29 +29,31 @@ para casos limite produjo estos resultados exactos:
 
 | Entorno | Resultado | Tiempo |
 |---|---|---:|
-| Windows | 71 pruebas correctas, 2 omitidas por ser exclusivas de Linux | 0.369 s |
-| Ubuntu WSL | 71 pruebas correctas, 0 fallos y 0 omisiones | 0.751 s |
+| Windows | 71 pruebas correctas, 2 omitidas por ser exclusivas de Linux | 0.339 s |
+| Ubuntu WSL | 71 pruebas correctas, 0 fallos y 0 omisiones | 0.615 s |
 
 Las omisiones de Windows corresponden solamente a integraciones que requieren
-Linux. La suite completa de Ubuntu es la evidencia automatizada de las cinco
-correcciones descritas en los articulos.
+Linux. La suite completa de Ubuntu complementa el recorrido manual realizado en
+una instalacion limpia de Ubuntu sobre las nueve opciones del menu.
 
 ## Procedencia de las figuras
 
 La figura de arquitectura representa el MVC y el flujo implementado en el
-repositorio. Las tres capturas de Ubuntu se recortaron y reescalaron sin retocar
-el contenido mostrado por la terminal en `Estado general.pdf`, creado el 18 de
-julio de 2026 a partir de una validacion manual en Ubuntu:
+repositorio. La figura final de ambos articulos agrupa seis capturas tomadas en
+una ejecucion manual del clon limpio sobre Ubuntu, sin modificar el contenido
+mostrado por la terminal:
 
-- `evidencia_estado_general_ubuntu.png` procede de la pagina 1 y muestra CPU,
-  memoria, disco y red; se usa como evidencia positiva de monitoreo.
-- `evidencia_crud_ubuntu.png` combina recortes de las paginas 4, 5 y 7. Conserva
-  el encabezado anterior `ID | ...` y el ID 2 posterior a una eliminacion, por
-  lo que se rotula exclusivamente como evidencia diagnostica previa a las
-  correcciones, no como prueba de la interfaz final.
-- `evidencia_concurrencia_ubuntu.png` procede de la pagina 8 y muestra seis
-  hilos, cero errores, PID padre e hijo y estado de salida cero; se usa como
-  evidencia positiva de concurrencia.
+- `05`, `06` y `07` documentan el estado general: CPU, memoria, disco, red,
+  procesos y usuarios conectados.
+- `14` y `15` muestran el registro de las capturas 1 y 2, el listado cronologico
+  ascendente y la actualizacion de la etiqueta del ID 1.
+- `17` muestra seis hilos completados, cero errores, PID padre e hijo distintos
+  y codigo de salida cero.
+
+Las capturas individuales `08` a `13` permanecen en el indice de evidencias para
+revisar por separado las opciones 2 a 7. La captura `16` conserva el texto del
+filtro anterior a la correccion y se mantiene unicamente como antecedente; no se
+usa en los PDF finales.
 
 ## Compilacion con Tectonic
 
@@ -101,7 +102,7 @@ El comando debe terminar sin coincidencias.
 
 ## Conteo y revision visual
 
-El 20 de julio de 2026 se compilaron ambos fuentes con Tectonic 0.16.9. Cada PDF
+El 22 de julio de 2026 se compilaron ambos fuentes con Tectonic 0.16.9. Cada PDF
 tiene 5 paginas Letter. El conteo se verifico con pdfinfo:
 
     pdfinfo monitor_recursos_linux_es.pdf | Select-String '^Pages:'
@@ -113,9 +114,12 @@ temporal:
     pdftoppm -png -r 144 monitor_recursos_linux_es.pdf "$env:TEMP\monitor_es_page"
     pdftoppm -png -r 144 linux_resource_monitor_en.pdf "$env:TEMP\monitor_en_page"
 
-Se inspeccionaron las diez paginas resultantes. No se observaron columnas
-cortadas, sobreimpresiones, desbordamientos de tablas, referencias sin resolver,
-texto de plantilla ni huecos anormales. Los logs no registraron cajas
+Se inspeccionaron las diez paginas resultantes, incluida la lamina final de seis
+paneles con tres capturas de igual ancho por fila y leyendas alineadas. No se
+observaron columnas cortadas, sobreimpresiones, desbordamientos de tablas,
+referencias sin resolver ni texto de plantilla. La ultima pagina conserva la
+lamina de evidencia centrada como flotante de doble columna de IEEEtran. Los
+logs no registraron cajas
 `Overfull`, citas indefinidas ni referencias indefinidas. Los archivos .log,
 .blg, .aux, .bbl,
 .out, renders PNG y binarios de herramientas son auxiliares locales y no forman

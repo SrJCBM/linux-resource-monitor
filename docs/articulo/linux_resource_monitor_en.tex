@@ -20,10 +20,11 @@ Sangolqu\'i, Ecuador}
 
 \begin{document}
 
+\bstctlcite{BSTcontrol}
 \maketitle
 
 \begin{abstract}
-Monitoring system resources is essential to understanding the current state of an operating system, yet it can remain an abstract concept when examined only through isolated commands. This paper presents the design and implementation of a Linux terminal application developed in Python 3. The application organizes the six monitoring modules according to the Model--View--Controller pattern: CPU, memory and \textit{swap}, processes, connected users, filesystems, and networking. Data are obtained directly from the \texttt{/proc} virtual filesystem and, where appropriate, from native commands executed in a controlled manner. To meet operating-systems requirements, the application explicitly creates threads with \texttt{threading.Thread} and a child process with \texttt{os.fork()}, communicating through a pipe. Complete captures are persisted in SQLite and managed through CRUD operations. Verification performed on Ubuntu under WSL recorded 71 successful tests with no failures or skips in 0.751~s. The result is a traceable educational foundation that integrates observation, concurrency, and persistence without replacing system interfaces with high-level monitoring dependencies.
+Monitoring system resources is essential to understanding the current state of an operating system, yet it can remain an abstract concept when examined only through isolated commands. This paper presents the design and implementation of a Linux terminal application developed in Python 3. The application organizes the six monitoring modules according to the Model--View--Controller pattern: CPU, memory and \textit{swap}, processes, connected users, filesystems, and networking. Data are obtained directly from the \texttt{/proc} virtual filesystem and, where appropriate, from native commands executed in a controlled manner. To meet operating-systems requirements, the application explicitly creates threads with \texttt{threading.Thread} and a child process with \texttt{os.fork()}, communicating through a pipe. Complete captures are persisted in SQLite and managed through CRUD operations. Verification performed on Ubuntu under WSL recorded 71 successful tests with no failures or skips in 0.615~s. The result is a traceable educational foundation that integrates observation, concurrency, and persistence without replacing system interfaces with high-level monitoring dependencies.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -129,12 +130,12 @@ The relational design distinguishes cardinalities. CPU and memory have a one-to-
 Writing opens an independent connection and enters the transaction context before inserting the parent row and the six metric families. If a required key is absent, a contract type is invalid, or SQLite rejects a row, the context rolls back the set and the \texttt{finally} block closes the connection. During reading, the repository reconstructs the same contract used by the view: one dictionary for CPU and memory and lists for the one-to-many relationships.
 
 \subsection{Terminal Interface Criteria}
-The main and history menus use numbered options. Invalid input keeps the loop active, and the optional filter requires a real date in \texttt{YYYY-MM-DD} format. Available captures are shown in ascending chronological order before consulting, updating, or deleting; each row has a sequential \texttt{N.} separate from its persistent ID. Existing IDs are not renumbered and, whenever history is empty, any residual sequence is cleared before insertion so the next capture uses ID~1. Deletion still requires an explicit \texttt{SI}, accepted without case or accent sensitivity. Long listings are initially limited to 20 rows and state how many records are displayed relative to the total.
+The main and history menus use numbered options. Invalid input keeps the loop active, and the optional filter requires a real date in \texttt{YYYY-MM-DD} format. Available captures are shown in ascending chronological order before consulting, updating, or deleting; each row has a sequential \texttt{N.} separate from its persistent ID. Existing IDs are not renumbered and, whenever history is empty, any residual sequence is cleared before insertion so the next capture uses ID~1. A valid date with no matches is distinguished from an empty history through a specific message. Deletion still requires an explicit \texttt{SI}, accepted without case or accent sensitivity. Long listings are initially limited to 20 rows and state how many records are displayed relative to the total.
 
 Output does not depend on color. Percentages are accompanied by \texttt{NORMAL}, \texttt{ADVERTENCIA}, or \texttt{CRITICO}; values include units and two decimal places, and the overall state includes an update timestamp. Missing values are expressed as \emph{No disponible} or with specific empty-list messages. The interface therefore remains understandable in a plain-text terminal and through keyboard operation.
 
 \section{Results and Validation}
-Table~\ref{tab:resultados} summarizes the final validation and manual evidence obtained on July 18, 2026, on Ubuntu. The suites were run with \texttt{python -m unittest discover -s tests} on Windows and with \texttt{python3} on Ubuntu under WSL; the other records exercised the monitoring controller, a temporary SQLite repository, and the concurrency demonstration. The documented durations belong to those functional runs and are not presented as performance measurements.
+Table~\ref{tab:resultados} summarizes the final automated and manual validation. The suites were run on July 22, 2026, with \texttt{python -m unittest discover -s tests} on Windows and with \texttt{python3} on Ubuntu under WSL. In parallel, a clean clone was exercised directly on Ubuntu through all nine menu options. The documented durations belong to these functional runs and are not presented as performance measurements.
 
 \begin{table}[t]
 \caption{Verified results from the documented execution.}
@@ -145,48 +146,65 @@ Table~\ref{tab:resultados} summarizes the final validation and manual evidence o
 \toprule
 Validation & Result & Status \\
 \midrule
-Windows suite & 71 tests; 2 skips; 0.369~s & 0 failures \\
-Ubuntu WSL suite & 71 tests; 0 skips; 0.751~s & 0 failures \\
+Windows suite & 71 tests; 2 skips; 0.339~s & 0 failures \\
+Ubuntu WSL suite & 71 tests; 0 skips; 0.615~s & 0 failures \\
 Overall state & 6 modules & 0 errors \\
-SQLite CRUD & Create/list/update/delete & Correct \\
+SQLite CRUD & IDs 1--2, order, update, delete & Correct \\
 Concurrency & 6 threads + 1 child & Exit status 0 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The overall-state evidence recorded all six modules with an empty error dictionary; Fig.~\ref{fig:estado-general} shows CPU, memory, disk, and networking in the Ubuntu terminal. In the persistence test, a capture was created, listed, had its metadata updated, and was deleted. The concurrency demonstration produced six threads without errors, followed by a child with a PID different from the parent's and an exit code of zero, as shown in Fig.~\ref{fig:concurrencia}.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{figuras/evidencia_estado_general_ubuntu.png}
-\caption{Overall state observed on Ubuntu: CPU, memory, filesystems, and networking.}
-\label{fig:estado-general}
-\end{figure}
-
-The suite combines deterministic tests and integration checks. Parsers for CPU, memory, disk, networking, processes, and users consume fixture files; the repository is created in a temporary directory and verifies both the reconstructed detail and cascade behavior; controllers are exercised with replaceable collectors and repositories; and Linux cases validate the integrated flow and a real \texttt{fork()}. This composition reduces dependence on ephemeral values without removing the final check on the target system.
+The overall-state option collected all six modules in one query. Panels (a)--(c) of Fig.~\ref{fig:evidencia-final} preserve the three sections of that output: CPU and memory; filesystems and networking; and the process and connected-user lists. The values belong to the observed virtual machine: five assigned logical processors, approximately 4.8~GB of memory, five mounts, two interfaces, and two active sessions. Individual queries from options 2 through 7 remain in the repository evidence index so that each table can be inspected without repeating them in the paper.
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.86\textwidth]{figuras/evidencia_crud_ubuntu.png}
-\caption{Pre-correction CRUD diagnostic evidence recorded during Ubuntu validation.}
-\label{fig:crud}
+\begin{minipage}[b]{0.315\textwidth}
+\centering
+\includegraphics[trim=0 0 0 220,clip,width=\linewidth]{../evidencias/capturas/05_opcion_1_estado_general_cpu_memoria.png}\\[-0.2em]
+{\scriptsize (a) CPU and memory.}
+\end{minipage}\hfill
+\begin{minipage}[b]{0.315\textwidth}
+\centering
+\includegraphics[width=\linewidth]{../evidencias/capturas/06_opcion_1_estado_general_disco_red.png}\\[-0.2em]
+{\scriptsize (b) Disk and networking.}
+\end{minipage}\hfill
+\begin{minipage}[b]{0.315\textwidth}
+\centering
+\includegraphics[width=\linewidth]{../evidencias/capturas/07_opcion_1_estado_general_procesos_usuarios.png}\\[-0.2em]
+{\scriptsize (c) Processes and connected users.}
+\end{minipage}
+\vspace{0.8em}
+
+\begin{minipage}[b]{0.315\textwidth}
+\centering
+\includegraphics[trim=0 0 0 175,clip,width=\linewidth]{../evidencias/capturas/14_opcion_8_crud_registro_capturas.png}\\[-0.2em]
+{\scriptsize (d) Registration of captures 1 and 2.}
+\end{minipage}\hfill
+\begin{minipage}[b]{0.315\textwidth}
+\centering
+\includegraphics[trim=0 0 0 95,clip,width=\linewidth]{../evidencias/capturas/15_opcion_8_crud_listado_actualizacion.png}\\[-0.2em]
+{\scriptsize (e) Listing and update of ID 1.}
+\end{minipage}\hfill
+\begin{minipage}[b]{0.315\textwidth}
+\centering
+\includegraphics[width=\linewidth]{../evidencias/capturas/17_opcion_9_concurrencia_hilos_fork.png}\\[-0.2em]
+{\scriptsize (f) Six threads and one child process.}
+\end{minipage}
+\caption{Final evidence executed on Ubuntu: overall state (a)--(c), SQLite persistence (d)--(e), and concurrency (f).}
+\label{fig:evidencia-final}
 \end{figure*}
 
-Manual Ubuntu validation produced five corrected findings. First, abbreviated \texttt{who} timestamps were normalized before calculating live duration. Second, historical disk reads convert stored GB values back to the byte contract expected by the view. Third, the filter rejects malformed formats and invalid calendar dates instead of performing an empty search. Fourth, \texttt{N.} numbers the display without replacing the stable ID; the list uses ascending chronological order and the next capture returns to ID~1 whenever history is empty. Fifth, consult, update, and delete display history first, while explicit \texttt{SI} confirmation remains mandatory but ignores case and the accent. Fig.~\ref{fig:crud} retains pre-correction diagnostic evidence, including the \texttt{ID} header and ID~2 appearing after deletion; it is not proof of the corrected interface. That behavior is verified by regression tests and the complete WSL suite.
+The suite combines deterministic tests and integration checks. Parsers for CPU, memory, disk, networking, processes, and users consume fixture files; the repository is created in a temporary directory and verifies both the reconstructed detail and cascade behavior; controllers are exercised with replaceable collectors and repositories; and Linux cases validate the integrated flow and a real \texttt{fork()}. This composition reduces dependence on ephemeral values without removing the final check on the target system.
+
+Panels (d)--(e) of Fig.~\ref{fig:evidencia-final} show two consecutive records with IDs 1 and 2. The list places the 15:15:42 capture before the 15:15:52 capture, matching the repository's ascending chronological order. The second view keeps \texttt{N.} and \texttt{ID} separate and confirms the updated label for ID~1. Deletion, a filter with no matches, detail consultation, and identifier reset after emptying history were verified during the same walkthrough and through regression tests; the screenshot containing the previous filter wording remains only in the evidence archive and is not used as a final figure. Panel (f) records six completed threads without errors, distinct parent and child PIDs, and an exit code of zero.
 
 Acceptance criteria were interpreted according to the nature of each datum. Key sets and formulas are required for CPU and memory, command records must be parseable, networking retains one primary address or explicit absence, the live view continues after partial failures, and history writes remain atomic. Exact equality is not required between counts taken at different instants, and observed execution times are not generalized.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{figuras/evidencia_concurrencia_ubuntu.png}
-\caption{Ubuntu evidence of six threads without errors and a child process exiting with status zero.}
-\label{fig:concurrencia}
-\end{figure}
 
 \section{Conclusions}
 The monitor integrates the functional requirements for observing CPU, memory, processes, users, disk, and networking in a Linux terminal application. MVC separation keeps resource reading, coordination, and presentation distinct; in turn, the repository centralizes SQLite persistence and CRUD operations.
 
-The demonstration of six threads and one child illustrates a relevant ordering decision: threads finish before \texttt{fork()} begins, and the parent retrieves the child through a pipe and \texttt{waitpid()}. The transaction for every complete capture and cascading foreign keys support the consistency of stored data. The five corrected incidents also show the importance of validating contracts among collection, persistence, and presentation. The documented verification supports the behavior described without attributing performance properties to it.
+The demonstration of six threads and one child illustrates a relevant ordering decision: threads finish before \texttt{fork()} begins, and the parent retrieves the child through a pipe and \texttt{waitpid()}. The transaction for every complete capture and cascading foreign keys support the consistency of stored data. The corrected incidents also show the importance of validating contracts among collection, persistence, and presentation. The documented verification supports the behavior described without attributing performance properties to it.
 
 As limitations, the readings depend on the available Linux interfaces and represent changing system states. Future work may study portability in the collection layer or longer-duration samples while preserving the architectural separation and without claiming that these extensions form part of the current version.
 

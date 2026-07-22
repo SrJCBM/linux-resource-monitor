@@ -21,10 +21,11 @@ Sangolqu\'i, Ecuador}
 
 \begin{document}
 
+\bstctlcite{BSTcontrol}
 \maketitle
 
 \begin{abstract}
-La observaci\'on de recursos es una actividad esencial para comprender el estado de un sistema operativo, pero puede resultar abstracta cuando se estudia solo mediante comandos aislados. Este trabajo presenta el dise\~no y la implementaci\'on de una aplicaci\'on de terminal para Linux desarrollada en Python 3. La propuesta organiza seis m\'odulos de monitoreo mediante el patr\'on Modelo--Vista--Controlador: CPU, memoria y \textit{swap}, procesos, usuarios conectados, sistemas de archivos y red. Los datos se obtienen directamente del sistema de archivos virtual \texttt{/proc} y, cuando corresponde, de comandos nativos ejecutados de forma controlada. Como parte de los requisitos de sistemas operativos, la aplicaci\'on crea expl\'icitamente hilos con \texttt{threading.Thread} y un proceso hijo con \texttt{os.fork()}, cuya comunicaci\'on se realiza mediante una tuber\'ia. Las capturas completas se persisten en SQLite y se administran con operaciones CRUD. La verificaci\'on ejecutada en Ubuntu bajo WSL registr\'o 71 pruebas correctas, sin fallos ni omisiones, en 0,751~s. El resultado muestra una base did\'actica trazable que integra observaci\'on, concurrencia y persistencia sin sustituir las interfaces del sistema por dependencias de monitoreo de alto nivel.
+La observaci\'on de recursos es una actividad esencial para comprender el estado de un sistema operativo, pero puede resultar abstracta cuando se estudia solo mediante comandos aislados. Este trabajo presenta el dise\~no y la implementaci\'on de una aplicaci\'on de terminal para Linux desarrollada en Python 3. La propuesta organiza seis m\'odulos de monitoreo mediante el patr\'on Modelo--Vista--Controlador: CPU, memoria y \textit{swap}, procesos, usuarios conectados, sistemas de archivos y red. Los datos se obtienen directamente del sistema de archivos virtual \texttt{/proc} y, cuando corresponde, de comandos nativos ejecutados de forma controlada. Como parte de los requisitos de sistemas operativos, la aplicaci\'on crea expl\'icitamente hilos con \texttt{threading.Thread} y un proceso hijo con \texttt{os.fork()}, cuya comunicaci\'on se realiza mediante una tuber\'ia. Las capturas completas se persisten en SQLite y se administran con operaciones CRUD. La verificaci\'on ejecutada en Ubuntu bajo WSL registr\'o 71 pruebas correctas, sin fallos ni omisiones, en 0,615~s. El resultado muestra una base did\'actica trazable que integra observaci\'on, concurrencia y persistencia sin sustituir las interfaces del sistema por dependencias de monitoreo de alto nivel.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -130,12 +131,12 @@ El dise\~no relacional distingue cardinalidades. CPU y memoria tienen una relaci
 La escritura abre una conexi\'on independiente y entra en el contexto transaccional antes de insertar la fila padre y las seis familias de m\'etricas. Si una clave requerida no existe, un tipo de contrato es incorrecto o SQLite rechaza una fila, el contexto revierte el conjunto y el bloque \texttt{finally} cierra la conexi\'on. En la lectura, el repositorio reconstruye el mismo contrato empleado por la vista: un diccionario para CPU y memoria, y listas para las relaciones uno a muchos.
 
 \subsection{Criterios de interfaz terminal}
-El men\'u principal y el historial se operan con opciones numeradas. Una entrada inv\'alida conserva el bucle activo y el filtro opcional exige una fecha real en formato \texttt{YYYY-MM-DD}. Antes de consultar, actualizar o eliminar, se presentan las capturas disponibles en orden cronol\'ogico ascendente; cada fila muestra un n\'umero secuencial \texttt{N.} separado del ID persistente. Los IDs existentes no se renumeran y, si el historial est\'a vac\'io, cualquier secuencia residual se limpia antes de insertar para que la siguiente captura use ID~1. La eliminaci\'on exige una confirmaci\'on \texttt{SI} expl\'icita, aceptada sin distinguir may\'usculas ni acento. Los listados extensos se limitan inicialmente a 20 filas e indican cu\'antos registros se muestran respecto del total.
+El men\'u principal y el historial se operan con opciones numeradas. Una entrada inv\'alida conserva el bucle activo y el filtro opcional exige una fecha real en formato \texttt{YYYY-MM-DD}. Antes de consultar, actualizar o eliminar, se presentan las capturas disponibles en orden cronol\'ogico ascendente; cada fila muestra un n\'umero secuencial \texttt{N.} separado del ID persistente. Los IDs existentes no se renumeran y, si el historial est\'a vac\'io, cualquier secuencia residual se limpia antes de insertar para que la siguiente captura use ID~1. Una fecha v\'alida sin coincidencias se distingue de un historial vac\'io mediante un mensaje espec\'ifico. La eliminaci\'on exige una confirmaci\'on \texttt{SI} expl\'icita, aceptada sin distinguir may\'usculas ni acento. Los listados extensos se limitan inicialmente a 20 filas e indican cu\'antos registros se muestran respecto del total.
 
 La salida no depende del color. Los porcentajes se acompa\~nan con \texttt{NORMAL}, \texttt{ADVERTENCIA} o \texttt{CRITICO}; los valores incluyen unidades y dos decimales, y el estado general muestra fecha de actualizaci\'on. Las ausencias se expresan como \emph{No disponible} o mediante mensajes espec\'ificos para listas vac\'ias. Por ello, la interfaz sigue siendo comprensible en una terminal de texto simple y mediante teclado.
 
 \section{Resultados y validaci\'on}
-La Tabla~\ref{tab:resultados} resume la validaci\'on final y la evidencia manual obtenida el 18 de julio de 2026 en Ubuntu. Las suites se ejecutaron con \texttt{python -m unittest discover -s tests} en Windows y con \texttt{python3} en Ubuntu bajo WSL; los dem\'as registros aplicaron el controlador de monitoreo, un repositorio SQLite temporal y la demostraci\'on de concurrencia. Los tiempos documentados corresponden a esas ejecuciones funcionales y no se presentan como mediciones de rendimiento.
+La Tabla~\ref{tab:resultados} resume la verificaci\'on automatizada y la validaci\'on manual final. Las suites se ejecutaron el 22 de julio de 2026 con \texttt{python -m unittest discover -s tests} en Windows y con \texttt{python3} en Ubuntu bajo WSL. En paralelo, un clon limpio del repositorio se recorri\'o directamente en Ubuntu mediante las nueve opciones del men\'u. Los tiempos corresponden a esas ejecuciones funcionales y no se presentan como mediciones de rendimiento.
 
 \begin{table}[t]
 \caption{Resultados verificados de la ejecuci\'on documentada.}
@@ -146,48 +147,65 @@ La Tabla~\ref{tab:resultados} resume la validaci\'on final y la evidencia manual
 \toprule
 Validaci\'on & Resultado & Estado \\
 \midrule
-Suite Windows & 71 pruebas; 2 omitidas; 0,369~s & 0 fallos \\
-Suite Ubuntu WSL & 71 pruebas; 0 omitidas; 0,751~s & 0 fallos \\
+Suite Windows & 71 pruebas; 2 omitidas; 0,339~s & 0 fallos \\
+Suite Ubuntu WSL & 71 pruebas; 0 omitidas; 0,615~s & 0 fallos \\
 Estado general & 6 m\'odulos & 0 errores \\
-CRUD SQLite & Crear/listar/actualizar/eliminar & Correcto \\
+CRUD SQLite & IDs 1--2, orden, edici\'on y borrado & Correcto \\
 Concurrencia & 6 hilos + 1 hijo & Exit status 0 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-La evidencia de estado general registr\'o los seis m\'odulos con un diccionario de errores vac\'io; la Fig.~\ref{fig:estado-general} muestra CPU, memoria, disco y red en la terminal de Ubuntu. En la prueba de persistencia se cre\'o una captura, se list\'o, se actualizaron sus metadatos y se elimin\'o. La demostraci\'on de concurrencia produjo seis hilos sin errores, seguida de un hijo con PID distinto al padre y c\'odigo de salida cero, como se observa en la Fig.~\ref{fig:concurrencia}.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{figuras/evidencia_estado_general_ubuntu.png}
-\caption{Estado general observado en Ubuntu: CPU, memoria, sistemas de archivos y red.}
-\label{fig:estado-general}
-\end{figure}
-
-La suite combina pruebas deterministas y verificaciones de integraci\'on. Los parsers de CPU, memoria, disco, red, procesos y usuarios consumen archivos de muestra; el repositorio se crea en un directorio temporal y comprueba tanto el detalle reconstruido como la cascada; los controladores se ejercitan con recolectores y repositorios sustituibles; y los casos de Linux validan el flujo integrado y el \texttt{fork()} real. Esta composici\'on reduce la dependencia de valores ef\'imeros sin eliminar la comprobaci\'on final sobre el sistema objetivo.
+La opci\'on de estado general reuni\'o los seis m\'odulos en una sola consulta. Los paneles (a)--(c) de la Fig.~\ref{fig:evidencia-final} conservan las tres partes de esa salida: CPU y memoria; sistemas de archivos y red; y las listas de procesos y usuarios conectados. Los valores corresponden a la m\'aquina virtual observada: cinco procesadores l\'ogicos asignados, aproximadamente 4,8~GB de memoria, cinco montajes, dos interfaces y dos sesiones activas. Las consultas individuales de las opciones 2 a 7 se conservaron en el \'indice de evidencias del repositorio para contrastar cada tabla sin repetirlas en el art\'iculo.
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.86\textwidth]{figuras/evidencia_crud_ubuntu.png}
-\caption{Evidencia diagn\'ostica CRUD previa a las correcciones, registrada durante la validaci\'on en Ubuntu.}
-\label{fig:crud}
+\begin{minipage}[b]{0.315\textwidth}
+\centering
+\includegraphics[trim=0 0 0 220,clip,width=\linewidth]{../evidencias/capturas/05_opcion_1_estado_general_cpu_memoria.png}\\[-0.2em]
+{\scriptsize (a) CPU y memoria.}
+\end{minipage}\hfill
+\begin{minipage}[b]{0.315\textwidth}
+\centering
+\includegraphics[width=\linewidth]{../evidencias/capturas/06_opcion_1_estado_general_disco_red.png}\\[-0.2em]
+{\scriptsize (b) Disco y red.}
+\end{minipage}\hfill
+\begin{minipage}[b]{0.315\textwidth}
+\centering
+\includegraphics[width=\linewidth]{../evidencias/capturas/07_opcion_1_estado_general_procesos_usuarios.png}\\[-0.2em]
+{\scriptsize (c) Procesos y usuarios conectados.}
+\end{minipage}
+\vspace{0.8em}
+
+\begin{minipage}[b]{0.315\textwidth}
+\centering
+\includegraphics[trim=0 0 0 175,clip,width=\linewidth]{../evidencias/capturas/14_opcion_8_crud_registro_capturas.png}\\[-0.2em]
+{\scriptsize (d) Registro de capturas 1 y 2.}
+\end{minipage}\hfill
+\begin{minipage}[b]{0.315\textwidth}
+\centering
+\includegraphics[trim=0 0 0 95,clip,width=\linewidth]{../evidencias/capturas/15_opcion_8_crud_listado_actualizacion.png}\\[-0.2em]
+{\scriptsize (e) Listado y actualizaci\'on del ID 1.}
+\end{minipage}\hfill
+\begin{minipage}[b]{0.315\textwidth}
+\centering
+\includegraphics[width=\linewidth]{../evidencias/capturas/17_opcion_9_concurrencia_hilos_fork.png}\\[-0.2em]
+{\scriptsize (f) Seis hilos y proceso hijo.}
+\end{minipage}
+\caption{Evidencia final ejecutada en Ubuntu: estado general (a)--(c), persistencia SQLite (d)--(e) y concurrencia (f).}
+\label{fig:evidencia-final}
 \end{figure*}
 
-La validaci\'on manual de Ubuntu produjo cinco hallazgos corregidos. Primero, el formato abreviado de \texttt{who} se normaliz\'o antes de calcular la duraci\'on en vivo. Segundo, la lectura hist\'orica de disco vuelve a convertir los GB almacenados al contrato de bytes esperado por la vista. Tercero, el filtro rechaza formatos y fechas calendario inv\'alidas en lugar de ejecutar una b\'usqueda vac\'ia. Cuarto, \texttt{N.} numera la presentaci\'on sin sustituir el ID estable; el listado usa orden cronol\'ogico ascendente y la pr\'oxima captura vuelve a ID~1 siempre que el historial est\'e vac\'io. Quinto, consultar, actualizar y eliminar muestran primero el historial, y la confirmaci\'on \texttt{SI} sigue siendo expl\'icita pero ignora may\'usculas y el acento. La Fig.~\ref{fig:crud} conserva la evidencia diagn\'ostica previa a las correcciones, incluido el encabezado \texttt{ID} y la aparici\'on del ID~2 despu\'es de eliminar; no prueba la interfaz corregida. Ese comportamiento se comprueba mediante pruebas de regresi\'on y la suite completa en WSL.
+La suite combina pruebas deterministas y verificaciones de integraci\'on. Los parsers de CPU, memoria, disco, red, procesos y usuarios consumen archivos de muestra; el repositorio se crea en un directorio temporal y comprueba tanto el detalle reconstruido como la cascada; los controladores se ejercitan con recolectores y repositorios sustituibles; y los casos de Linux validan el flujo integrado y el \texttt{fork()} real. Esta composici\'on reduce la dependencia de valores ef\'imeros sin eliminar la comprobaci\'on final sobre el sistema objetivo.
+
+Los paneles (d)--(e) de la Fig.~\ref{fig:evidencia-final} muestran dos registros consecutivos con IDs 1 y 2. El listado presenta primero la captura de las 15:15:42 y despu\'es la de las 15:15:52, por lo que coincide con el orden cronol\'ogico ascendente del repositorio. La segunda vista conserva separados \texttt{N.} e \texttt{ID} y confirma la actualizaci\'on de la etiqueta del ID~1. La eliminaci\'on, el filtrado sin coincidencias, la consulta de detalle y el reinicio del identificador al vaciar el historial se verificaron durante el mismo recorrido y mediante pruebas de regresi\'on; la captura con el texto anterior del filtro se conserva solamente en el archivo de evidencias, no como figura final. El panel (f) registra seis hilos completados sin errores, PID padre e hijo distintos y c\'odigo de salida cero.
 
 Los criterios de aceptaci\'on se interpretaron seg\'un la naturaleza de cada dato. Se exige igualdad de claves y f\'ormulas para CPU y memoria, registros parseables para comandos, una direcci\'on primaria o ausencia expl\'icita en red, continuidad ante fallos parciales para la vista en vivo y atomicidad para el historial. No se exige igualdad exacta entre conteos tomados en instantes diferentes ni se generalizan los tiempos observados en una ejecuci\'on.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{figuras/evidencia_concurrencia_ubuntu.png}
-\caption{Evidencia en Ubuntu de seis hilos sin errores y un proceso hijo con salida cero.}
-\label{fig:concurrencia}
-\end{figure}
 
 \section{Conclusiones}
 El monitor integra los requisitos funcionales de observaci\'on de CPU, memoria, procesos, usuarios, disco y red en una aplicaci\'on de terminal para Linux. La separaci\'on MVC mantiene diferenciadas la lectura de recursos, la coordinaci\'on y la presentaci\'on; a su vez, el repositorio concentra la persistencia y las operaciones CRUD sobre SQLite.
 
-La demostraci\'on de seis hilos y un hijo ilustra una decisi\'on de orden relevante: los hilos terminan antes de iniciar \texttt{fork()}, y el padre recupera al hijo mediante una tuber\'ia y \texttt{waitpid()}. La transacci\'on para cada captura completa y las claves for\'aneas con cascada sostienen la consistencia de los datos almacenados. Los cinco incidentes corregidos muestran adem\'as la importancia de validar contratos entre recolecci\'on, persistencia y presentaci\'on. La verificaci\'on documentada respalda el comportamiento descrito, sin atribuirle propiedades de rendimiento.
+La demostraci\'on de seis hilos y un hijo ilustra una decisi\'on de orden relevante: los hilos terminan antes de iniciar \texttt{fork()}, y el padre recupera al hijo mediante una tuber\'ia y \texttt{waitpid()}. La transacci\'on para cada captura completa y las claves for\'aneas con cascada sostienen la consistencia de los datos almacenados. Las incidencias corregidas muestran adem\'as la importancia de validar contratos entre recolecci\'on, persistencia y presentaci\'on. La verificaci\'on documentada respalda el comportamiento descrito, sin atribuirle propiedades de rendimiento.
 
 Como limitaciones, las lecturas dependen de las interfaces Linux disponibles y representan estados cambiantes del sistema. Trabajos futuros pueden estudiar la portabilidad de la capa de obtenci\'on o muestras de mayor duraci\'on, conservando la separaci\'on arquitect\'onica y sin afirmar que dichas extensiones formen parte de la versi\'on actual.
 
