@@ -10,15 +10,17 @@ The application is designed for monitoring and registration only. It does not te
 
 ## Project status
 
-| Stage | Scope | Status |
-|---|---|---|
-| Week 1 | Requirements, architecture and database design | Completed |
-| Week 2 | CPU, memory and `/proc` implementation | Completed |
-| Week 3 | Disk, network, users and processes | Completed |
-| Week 4 | `os.fork()`, threads and CRUD | Completed |
-| Week 5 | Integration, tests, manuals and evidence | In progress |
+| Stage | Period | Scope | Status |
+|---|---|---|---|
+| Week 1 | June 30 to July 6, 2026 | Requirements, architecture and database design | Completed |
+| Week 2 | July 7 to July 13, 2026 | CPU, memory and `/proc` implementation | Completed |
+| Week 3 | July 14 to July 20, 2026 | Disk, network, users and processes | Completed |
+| Week 4 | July 21 to July 27, 2026 | `os.fork()`, threads and CRUD | Completed |
+| Week 5 | July 28 to August 3, 2026 | Integration, tests, manuals, evidence, IEEE article and presentation | Completed; demonstration video pending |
 
-> Week 5 integration, test coverage, manuals and execution evidence are in progress. The bilingual IEEE article drafts are complete and validated at four pages each; the presentation and demonstration video remain pending deliverables.
+> The application, automated tests, manuals, Ubuntu evidence, bilingual IEEE
+> articles and presentation are complete. The only pending academic deliverable
+> is the demonstration video.
 
 ## Quick start for reviewers
 
@@ -33,7 +35,29 @@ python3 -m pip install -r requirements.txt
 python3 -m unittest discover -s tests
 ```
 
-The tested implementation covers all six monitoring modules, concurrent collection, the Linux `fork()` demonstration, SQLite CRUD and the integrated terminal menu. The bilingual IEEE article drafts are complete and validated at four pages each. The presentation and demonstration video remain pending Week 5 deliverables.
+The tested implementation covers all six monitoring modules, concurrent
+collection, the Linux `fork()` demonstration, SQLite CRUD and the integrated
+terminal menu. The repository also includes the manuals, Ubuntu execution
+evidence, bilingual IEEE articles and the final presentation. Only the
+demonstration video remains pending.
+
+## Current result
+
+The implemented application provides:
+
+- An integrated numbered terminal menu with options for general status, CPU,
+  memory, processes, disk, network, connected users, history and concurrency.
+- Live collection of six resource modules using `/proc` and native Linux
+  commands.
+- Concurrent collection with six explicit `threading.Thread` workers.
+- A real child process created with `os.fork()`, communication through a pipe
+  and cleanup with `os.waitpid()`.
+- Atomic SQLite captures with complete CRUD operations, chronological listing,
+  date filtering and cascade deletion.
+- Controlled handling of invalid input, partial monitoring errors and Linux
+  processes that disappear while being read.
+- Automated validation in WSL 2 Ubuntu and functional validation in an Ubuntu
+  virtual machine.
 
 ## Week 2 and Week 3 validation guide
 
@@ -248,13 +272,18 @@ It must also demonstrate:
 
 ## Technologies
 
-- Linux
-- Python 3
-- Visual Studio Code
-- SQLite
-- Git and GitHub
+- **Runtime:** Linux and Python 3.
+- **Persistence:** SQLite through the standard `sqlite3` module.
+- **Operating-system interfaces:** `/proc`, `df`, `ip`, `who` and `ps`.
+- **Python standard library:** `subprocess`, `threading`, `os`, `pathlib`,
+  `sqlite3` and `unittest`.
+- **Architecture:** MVC with a separate repository component.
+- **Version control and tools:** Git, GitHub and Visual Studio Code.
+- **Validated environments:** WSL 2 with Ubuntu and an Ubuntu virtual machine.
 
-The implementation prioritizes the Python standard library.
+The implementation uses only the Python standard library. MVC is the software
+architecture, CRUD is the set of persistence operations, and `/proc` is the
+virtual kernel interface used as a monitoring source.
 
 ## Data sources
 
@@ -351,13 +380,43 @@ Run the test suite with:
 python3 -m unittest discover -s tests
 ```
 
-Unit tests should use stored sample outputs. Linux integration tests should be kept separate because live system information changes continuously.
+The current suite contains **71 automated tests**: **69 unit tests** and **2
+Linux integration tests**.
 
-Recommended checks before moving to Week 5:
+| Area | Tests | Main checks |
+|---|---:|---|
+| Terminal interface and menus | 24 | Tables, units, status labels, invalid input, navigation, deletion confirmation and formatted capture details |
+| Models and parsers | 16 | CPU, memory, disk, network, processes and users using deterministic fixtures |
+| Controllers and application composition | 15 | Module coordination, partial errors, validation, CRUD delegation and the required order between threads and `fork()` |
+| SQLite and persistence | 12 | Schema, foreign keys, transactions, CRUD, date filters, ascending order, identifier sequence, cascade deletion and rollback |
+| Evidence generation | 2 | Stable recording of successful commands and controlled failures |
+| Linux integration | 2 | Complete live capture/CRUD flow and a real `os.fork()` execution with pipe, PID checks and exit status `0` |
 
-- Run all unit tests with `python3 -m unittest discover -s tests`.
-- Complete the Week 2, Week 3 and Week 4 validation guides above in Ubuntu, WSL or a Linux virtual machine.
-- Confirm the project does not require administrator privileges.
+Verified in WSL 2 Ubuntu:
+
+```text
+Ran 71 tests in 0.696s
+
+OK
+```
+
+The unit tests use stored sample outputs under `tests/fixtures/`, while the two
+integration tests use real Linux resources. On native Windows, the Linux-only
+integration tests are skipped because `os.fork()` and `/proc` are unavailable.
+
+The project has **not** undergone formal stress or load testing. The concurrent
+test verifies correctness with six monitoring threads and one child process; it
+does not measure behavior under hundreds of captures, prolonged execution or a
+large SQLite history.
+
+Manual Ubuntu validation also covered:
+
+- Menu options 1 through 9.
+- Real output from all six monitoring modules.
+- Capture registration, ascending listing, consultation, metadata update,
+  deletion and date filtering.
+- Six completed worker threads with no errors and a child process finishing
+  with exit status `0`.
 
 ## Database
 
@@ -434,10 +493,12 @@ Project documentation is stored under `docs/`:
 - Week 1 requirements, architecture and database design.
 - Installation manual.
 - Execution manual.
-- Complete bilingual IEEE article drafts, validated at four pages each:
+- Complete bilingual IEEE articles, validated at five pages each:
   - [Spanish LaTeX source](docs/articulo/monitor_recursos_linux_es.tex) and [final Spanish PDF](docs/articulo/monitor_recursos_linux_es.pdf).
   - [English LaTeX source](docs/articulo/linux_resource_monitor_en.tex) and [final English PDF](docs/articulo/linux_resource_monitor_en.pdf).
-- Presentation material.
+- Final presentation:
+  - [Updated PowerPoint presentation](docs/presentacion/Linux_Resource_Monitor_Exposicion_Actualizada.pptx), including speaker notes and the detailed 71-test breakdown.
+  - [Initial PowerPoint version](docs/presentacion/Linux_Resource_Monitor_Exposicion.pptx).
 - Demonstration evidence.
 
 The Ubuntu manual-validation source is the eight-page `Estado general.pdf`,
@@ -459,6 +520,41 @@ The final project includes:
 - A 5–10 minute demonstration video.
 - A presentation of no more than 10 slides.
 - A technical defense by all team members.
+
+## Reusing the project for a practical exercise
+
+This repository can be used as a starting point for another Linux, Python,
+databases or software-architecture exercise. Before adapting it:
+
+1. Create a new branch and preserve the working academic version.
+
+   ```bash
+   git switch -c feature/practical-exercise
+   ```
+
+2. Run the complete baseline suite in Linux or WSL.
+
+   ```bash
+   python3 -m unittest discover -s tests
+   ```
+
+3. Identify the layer affected by the new exercise:
+
+   - Add operating-system reading or parsing logic under `model/`.
+   - Coordinate new behavior from `controller/`.
+   - Keep terminal formatting and input under `view/`.
+   - Change `database/esquema.sql`, `database/conexion.py` and
+     `model/repositorio.py` together when persistence changes.
+
+4. Add deterministic fixtures and unit tests before relying on live machine
+   output. Keep Linux-only behavior under `tests/integration/`.
+5. Run the complete suite again and document whether the new work is a unit,
+   integration, functional, performance or stress test.
+
+Good extension exercises include adding a new read-only metric, exporting a
+capture, comparing two stored captures, introducing retention rules or creating
+a measured stress-test script. Avoid sharing SQLite connections between threads
+or processes, and never execute `os.fork()` while worker threads are active.
 
 ## Team
 
